@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+    overscroll-behavior: contain;
+    -webkit-tap-highlight-color: transparent;
+}
+
+* {
+    user-select: none;
+}
+
+.react-colorful .react-colorful__pointer {
+    width: 15px;
+    height: 15px;
+}
