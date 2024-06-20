@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import { useInviteStore } from '@/store';
+import { useRoom } from '@/hooks/useRoom';
 import { IoIosArrowBack } from 'react-icons/io';
 import { AiOutlineClose } from 'react-icons/ai';
 import { GrAdd } from 'react-icons/gr';
@@ -41,8 +42,6 @@ const Invite = () => {
                 <div className="p-5 h-full">
                     {preference === "" ? (
                         <PreferenceSelector />
-                    ) : preference === "Create" ? (
-                        <CreateRoom />
                     ) : preference === "Join" ? (
                         <JoinRoom />
                     ) : preference === "Share" ? (
@@ -55,22 +54,22 @@ const Invite = () => {
 };
 
 const PreferenceSelector = () => {
+    const { handleCreateRoom, isCreating } = useRoom();
     const { setPreference } = useInviteStore();
 
     return (
         <div className='h-full flex flex-col justify-between'>
             <div className='h-full flex items-center justify-center gap-20'>
-                <div className='flex flex-col items-center gap-1'>
-                    <div
-                        className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'
-                        onClick={() => setPreference("Create")}
-                    >
-                        <GrAdd size={30} />
-                    </div>
-                    <div className='cursor-pointer' onClick={() => setPreference("Create")}>
-                        Create Room
-                    </div>
-                </div>
+                {isCreating ? <div className='w-[98.34px] flex items-center justify-center'><BarLoader height={4} width={50} /></div> : (
+                    <button className='flex flex-col items-center gap-1' onClick={handleCreateRoom} disabled={isCreating}>
+                        <div className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'>
+                            <GrAdd size={30} />
+                        </div>
+                        <div className='cursor-pointer'>
+                            Create Room
+                        </div>
+                    </button>
+                )}
                 <div className='flex flex-col items-center gap-1'>
                     <div
                         className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'
@@ -82,58 +81,6 @@ const PreferenceSelector = () => {
                         Join Room
                     </div>
                 </div>
-            </div>
-        </div>
-    )
-};
-
-const CreateRoom = () => {
-    const router = useRouter()
-    const { setRoomType, setRoomID } = useInviteStore();
-    const [roomId, setRoomId] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const handleCreateRoom = () => {
-        if (roomId.length < 5) return toast.error("Room ID must be atleast 5 digits!");
-        setLoading(true);
-
-        setRoomType("Create");
-        setRoomID(roomId);
-        router.push(`/room/${roomId}`, { shallow: true } as any);
-    };
-
-    return (
-        <div className='h-full flex flex-col justify-between'>
-            <p className='text-[20px] text-center'>
-                Create Room
-            </p>
-            <div className='flex items-center justify-between'>
-                <div className='w-[40%]'>
-                    Create Room ID
-                </div>
-                <div className='w-[60%]'>
-                    <input
-                        className='w-full outline-none border rounded-md py-2 px-1 md:px-4 text-center'
-                        value={roomId}
-                        onChange={e => setRoomId(e.target.value)}
-                        placeholder='Example- 12345'
-                    />
-                </div>
-            </div>
-            <div className='w-full h-[1px] bg-gray-200' />
-            <div className='flex justify-end items-center'>
-                <button
-                    disabled={loading}
-                    className={`${loading ? "bg-white" : "bg-black hover:bg-white text-white hover:text-black duration-200"} w-[80px] h-[40px] py-2 px-4 rounded-lg`}
-                    onClick={handleCreateRoom}
-                >
-                    {loading ? (
-                        <BarLoader
-                            height={4}
-                            width={50}
-                        />
-                    ) : "Create"}
-                </button>
             </div>
         </div>
     )
@@ -191,6 +138,7 @@ const JoinRoom = () => {
 };
 
 const ShareRoom = () => {
+    const { handleCreateRoom, isCreating } = useRoom();
     const { setPreference, roomID } = useInviteStore();
 
     const [hasCopied, setHasCopied] = useState<boolean>(false);
@@ -238,7 +186,7 @@ const ShareRoom = () => {
             <div className='w-full h-[1px] bg-gray-200' />
             {roomID ? (
                 <div className='flex justify-between items-center'>
-                    <button className='hover:underline text-[14px]' onClick={() => setPreference("Create")}>
+                    <button className='hover:underline text-[14px]' onClick={handleCreateRoom} disabled={isCreating}>
                         Create new Room
                     </button>
                     <button className='hover:underline text-[14px]' onClick={() => setPreference("Join")}>

@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { generateUniqueRoomCode } from './utils.js';
 
 dotenv.config();
 const app = express();
@@ -76,6 +77,11 @@ app.get('/', async (req, res, next) => {
     } catch (error) {
         res.send({ message: error });
     }
+});
+
+app.get('/create-room', (req, res) => {
+    const roomId = generateUniqueRoomCode(socketRoom);
+    res.json({ roomId });
 });
 
 const PORT = process.env.PORT || 5000;

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import useWindowSize from '@/utils/useWindowSize';
 import { useDraw } from '@/hooks/useDraw';
 import { useInviteStore, useSocketStore, useToolbarStore } from '@/store';
@@ -11,7 +11,7 @@ import RoomSidebar from './RoomSidebar';
 
 const RoomCanvas = () => {
     const { width, height } = useWindowSize();
-    const { roomID } = useInviteStore();
+    const { roomID, playerName } = useInviteStore();
     const { brushThickness, color } = useToolbarStore();
     const { setConnected } = useSocketStore();
     const socket = connectSocket(setConnected);
@@ -22,7 +22,7 @@ const RoomCanvas = () => {
         drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
     };
 
-    useEffect(() => {
+    const setupSocketListeners = useCallback(() => {
         const ctx = canvasRef.current?.getContext('2d');
 
         socket.emit('join-room', roomID);
@@ -58,6 +58,13 @@ const RoomCanvas = () => {
             socket.off('clear');
         }
     }, [canvasRef, socket, roomID, clear]);
+
+    useEffect(() => {
+        const cleanup = setupSocketListeners();
+        return () => {
+            cleanup();
+        };
+    }, [setupSocketListeners]);
 
     return (
         <div className='relative'>
