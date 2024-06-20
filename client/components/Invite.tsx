@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import { useInviteStore } from '@/store';
@@ -14,16 +14,11 @@ import { BarLoader } from 'react-spinners';
 
 const Invite = () => {
     const { invite, setInvite, preference, setPreference, roomID } = useInviteStore();
-    const [showClose, setShowClose] = useState(true);
-
-    useEffect(() => {
-        if (location.pathname === "/room") setShowClose(false);
-    }, []);
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="bg-black opacity-70 fixed inset-0 z-40"></div>
-            <div className={`bg-white w-[95%] md:w-[500px] ${preference !== "Share" ? "h-[214px]" : "min-h-[214px]"} mx-auto rounded-lg shadow-lg overflow-hidden z-50 relative`}>
+        <div className="fixed inset-0 flex items-center justify-center z-30">
+            <div className="bg-black opacity-70 fixed inset-0 z-20"></div>
+            <div className={`bg-white w-[95%] md:w-[500px] ${preference !== "Share" ? "h-[214px]" : "min-h-[214px]"} mx-auto rounded-lg shadow-lg overflow-hidden z-30 relative`}>
                 {(preference !== "Share" && preference !== "") && (
                     <button
                         className='absolute left-0 top-0 w-[30px] h-[30px] bg-gray-100 hover:bg-black text-black hover:text-white duration-200 flex items-center justify-center'
@@ -35,7 +30,7 @@ const Invite = () => {
                         <IoIosArrowBack />
                     </button>
                 )}
-                {showClose && (
+                {location.pathname !== "/" && location.pathname !== "/room" && (
                     <button
                         className='absolute right-0 top-0 w-[30px] h-[30px] bg-gray-100 hover:bg-black text-black hover:text-white duration-200 flex items-center justify-center'
                         onClick={() => setInvite(!invite)}
@@ -64,10 +59,7 @@ const PreferenceSelector = () => {
 
     return (
         <div className='h-full flex flex-col justify-between'>
-            <p className='text-[20px] text-center'>
-                Select your preference
-            </p>
-            <div className='flex items-center justify-center gap-20'>
+            <div className='h-full flex items-center justify-center gap-20'>
                 <div className='flex flex-col items-center gap-1'>
                     <div
                         className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'
@@ -76,7 +68,7 @@ const PreferenceSelector = () => {
                         <GrAdd size={30} />
                     </div>
                     <div className='cursor-pointer' onClick={() => setPreference("Create")}>
-                        Create
+                        Create Room
                     </div>
                 </div>
                 <div className='flex flex-col items-center gap-1'>
@@ -87,7 +79,7 @@ const PreferenceSelector = () => {
                         <GoPeople size={30} />
                     </div>
                     <div className='cursor-pointer' onClick={() => setPreference("Join")}>
-                        Join
+                        Join Room
                     </div>
                 </div>
             </div>
@@ -107,7 +99,7 @@ const CreateRoom = () => {
 
         setRoomType("Create");
         setRoomID(roomId);
-        router.push(`/room/${roomId}`, { scroll: false });
+        router.push(`/room/${roomId}`, { shallow: true } as any);
     };
 
     return (
@@ -131,6 +123,7 @@ const CreateRoom = () => {
             <div className='w-full h-[1px] bg-gray-200' />
             <div className='flex justify-end items-center'>
                 <button
+                    disabled={loading}
                     className={`${loading ? "bg-white" : "bg-black hover:bg-white text-white hover:text-black duration-200"} w-[80px] h-[40px] py-2 px-4 rounded-lg`}
                     onClick={handleCreateRoom}
                 >
@@ -158,7 +151,7 @@ const JoinRoom = () => {
 
         setRoomType("Join");
         setRoomID(roomId);
-        router.push(`/room/${roomId}`, { scroll: false });
+        router.push(`/room/${roomId}`, { shallow: true } as any);
     };
 
     return (
