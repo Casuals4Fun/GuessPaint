@@ -13,10 +13,6 @@ type DrawLineProps = Draw & {
 };
 
 type ToolbarState = {
-    bgSelect: boolean,
-    setBgSelect: Dispatch<SetStateAction<boolean>>,
-    canvasBg: string,
-    setCanvasBg: Dispatch<SetStateAction<string>>,
     colorPicker: boolean,
     setColorPicker: Dispatch<SetStateAction<boolean>>,
     color: string,
@@ -24,17 +20,9 @@ type ToolbarState = {
     brushEdit: boolean,
     setBrushEdit: Dispatch<SetStateAction<boolean>>,
     brushThickness: number,
-    setBrushThickness: Dispatch<SetStateAction<number>>
-    downloadSelect: boolean,
-    setDownloadSelect: Dispatch<SetStateAction<boolean>>,
-    downloadCanvasWidth: number,
-    setDownloadCanvasWidth: Dispatch<SetStateAction<number>>,
-    downloadCanvasHeight: number,
-    setDownloadCanvasHeight: Dispatch<SetStateAction<number>>,
+    setBrushThickness: Dispatch<SetStateAction<number>>,
     openCanvasBg: boolean,
-    setOpenCanvasBg: Dispatch<SetStateAction<boolean>>,
-    downloadCanvasBg: string,
-    setDownloadCanvasBg: Dispatch<SetStateAction<string>>
+    setOpenCanvasBg: Dispatch<SetStateAction<boolean>>
 };
 
 type SocketState = {
@@ -43,6 +31,8 @@ type SocketState = {
 }
 
 type InviteState = {
+    playerName: string,
+    setPlayerName: Dispatch<SetStateAction<string>>,
     roomType: string,
     setRoomType: Dispatch<SetStateAction<string>>,
     invite: boolean,

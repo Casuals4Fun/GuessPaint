@@ -1,20 +1,13 @@
 "use client"
 
-import { Toaster } from 'sonner';
+import { useInviteStore } from '@/store';
+import PlayerName from '@/components/PlayerName';
 import Invite from '@/components/Invite';
 
 const Room = () => {
-    return (
-        <>
-            <Toaster
-                position='top-center'
-                duration={5000}
-                richColors
-            />
-            <div className='overflow-y-hidden relative w-screen h-[100dvh] flex flex-col items-center justify-between bg-black' />
-            <Invite />
-        </>
-    )
+    const { playerName } = useInviteStore();
+
+    return !playerName ? <PlayerName /> : <Invite />
 }
 
 export default Room

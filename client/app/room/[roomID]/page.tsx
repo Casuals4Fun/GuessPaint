@@ -2,18 +2,17 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { useInviteStore } from '@/store';
-import useWindowSize from '@/utils/useWindowSize';
 import RoomCanvas from '@/components/RoomCanvas';
 import Invite from '@/components/Invite';
+import PlayerName from '@/components/PlayerName';
 
 const InviteRoom = () => {
     const params = useParams();
     const roomID = params!.roomID;
 
-    const { roomType, setRoomID, setPreference, invite, setInvite } = useInviteStore();
-    const { width, height } = useWindowSize();
+    const { playerName, roomType, setRoomID, setPreference, invite, setInvite } = useInviteStore();
 
     useEffect(() => {
         if (roomID) {
@@ -34,17 +33,12 @@ const InviteRoom = () => {
     }, [roomType, setInvite]);
 
     return (
-        <>
-            <Toaster
-                position='top-center'
-                duration={5000}
-                richColors
-            />
-            <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between bg-black'>
-                <RoomCanvas width={width} height={height} />
+        !playerName ? <PlayerName /> : (
+            <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
+                <RoomCanvas />
                 {invite && <Invite />}
             </div>
-        </>
+        )
     )
 };
 
