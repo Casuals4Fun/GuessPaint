@@ -32,22 +32,21 @@ let socketPlayerNames = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
-        console.log("Called Join Room");
-
+        const uniquePlayerName = `${playerName}#${Date.now()}`;
+    
         socket.join(roomID);
         socketRoom[socket.id] = roomID;
-        socketPlayerNames[socket.id] = playerName;
-
+        socketPlayerNames[socket.id] = uniquePlayerName;
+    
         if (!roomPlayers[roomID]) {
             roomPlayers[roomID] = [];
         }
-        if (!roomPlayers[roomID].includes(playerName)) {
-            roomPlayers[roomID].push(playerName);
-        }
-
-        socket.broadcast.to(roomID).emit('new-player', playerName);
+        roomPlayers[roomID].push(uniquePlayerName);
+    
+        socket.emit('assign-player-name', uniquePlayerName);
+        socket.broadcast.to(roomID).emit('new-player', uniquePlayerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
-    });
+    });    
 
     socket.on('client-ready', () => {
         const roomID = socketRoom[socket.id];
@@ -118,8 +117,8 @@ app.get('/', async (req, res, next) => {
 });
 
 app.get('/create-room', (req, res) => {
-    const roomId = generateUniqueRoomCode(socketRoom);
-    res.json({ roomId });
+    const roomID = generateUniqueRoomCode(socketRoom);
+    res.json({ roomID });
 });
 
 const PORT = process.env.PORT || 5000;

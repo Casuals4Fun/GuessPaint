@@ -95,27 +95,27 @@ export const useDraw = (onDraw: ({ ctx, currPoint, prevPoint }: Draw) => void) =
         }
     }, [onDraw]);
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (canvas) {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-        }
+    // useEffect(() => {
+    //     const canvas = canvasRef.current;
+    //     if (canvas) {
+    //         canvas.width = canvas.offsetWidth;
+    //         canvas.height = canvas.offsetHeight;
+    //     }
 
-        const handleResize = () => {
-            const canvas = canvasRef.current;
-            if (canvas) {
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-            }
-        };
+    //     const handleResize = () => {
+    //         const canvas = canvasRef.current;
+    //         if (canvas) {
+    //             canvas.width = canvas.offsetWidth;
+    //             canvas.height = canvas.offsetHeight;
+    //         }
+    //     };
 
-        window.addEventListener('resize', handleResize);
+    //     window.addEventListener('resize', handleResize);
 
-        return () => {
-            window.removeEventListener('resize', handleResize);
-        };
-    }, []);
+    //     return () => {
+    //         window.removeEventListener('resize', handleResize);
+    //     };
+    // }, []);
 
     return { canvasRef, onMouseDown, clear };
 };

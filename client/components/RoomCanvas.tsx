@@ -1,24 +1,31 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import useWindowSize from '@/utils/useWindowSize';
 import { useDraw } from '@/hooks/useDraw';
-import { useInviteStore, useToolbarStore } from '@/store';
+import { useInviteStore, useSidebarStore, useToolbarStore } from '@/store';
 import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
 import RoomSidebar from './RoomSidebar';
+import { useParams } from 'next/navigation';
 
-const RoomCanvas = () => {
+const RoomCanvas: React.FC = () => {
+    const params = useParams();
+    const roomID = params.roomID;
+
     const { width, height } = useWindowSize();
-    const { roomID, playerName } = useInviteStore();
+    const { playerName } = useInviteStore();
     const { brushThickness, color } = useToolbarStore();
+    const { setPlayers, addPlayer, removePlayer, setAssignedPlayerName } = useSidebarStore();
+
     const socketRef = useRef(connectSocket());
     const setupCompleted = useRef(false);
     const joinedRoomRef = useRef(false);
 
     const { canvasRef, onMouseDown, clear } = useDraw(createLine);
-    
+
     function createLine({ prevPoint, currPoint, ctx }: Draw) {
         socketRef.current.emit('draw-line', { prevPoint, currPoint, color, brushThickness });
         drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
@@ -26,26 +33,35 @@ const RoomCanvas = () => {
 
     const setupSocketListeners = useCallback(() => {
         if (setupCompleted.current) {
-            return () => {};
+            return () => { };
         }
 
         const ctx = canvasRef.current?.getContext('2d');
 
         if (!joinedRoomRef.current) {
             socketRef.current.emit('join-room', { roomID, playerName });
+
+            socketRef.current.on('assign-player-name', (assignedName: string) => {
+                setAssignedPlayerName(assignedName);
+            });
+
             joinedRoomRef.current = true;
         }
 
-        socketRef.current.on('new-player', (playerName) => {
-            console.log(`${playerName} has joined the room.`);
+        socketRef.current.on('players-in-room', (players: string[]) => {
+            setPlayers(players);
         });
 
-        socketRef.current.on('players-in-room', (players) => {
-            console.log('Players in room:', players);
+        socketRef.current.on('new-player', (playerName: string) => {
+            addPlayer(playerName);
+            const originalPlayerName = playerName.split('#')[0];
+            toast.success(`${originalPlayerName} joined`);
         });
 
-        socketRef.current.on('player-left', (playerName) => {
-            console.log(`${playerName} has left the room.`);
+        socketRef.current.on('player-left', (playerName: string) => {
+            removePlayer(playerName);
+            const originalPlayerName = playerName.split('#')[0];
+            toast.error(`${originalPlayerName} left`);
         });
 
         socketRef.current.emit('client-ready');
@@ -85,7 +101,7 @@ const RoomCanvas = () => {
             setupCompleted.current = false;
         };
     }, []);
-    // }, [canvasRef, roomID, playerName, clear]);
+    // }, [addPlayer, clear, canvasRef, removePlayer, roomID, playerName, setPlayers, setAssignedPlayerName]);
 
     useEffect(() => {
         const cleanup = setupSocketListeners();
@@ -118,7 +134,7 @@ const RoomCanvas = () => {
 
             <RoomSidebar />
         </div>
-    )
+    );
 }
 
 export default React.memo(RoomCanvas);

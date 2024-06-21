@@ -10,7 +10,7 @@ interface UseCreateRoomReturn {
 
 export const useRoom = (): UseCreateRoomReturn => {
     const router = useRouter();
-    const { setRoomType, setRoomID } = useInviteStore();
+    const { setRoomType } = useInviteStore();
     const [isCreating, setIsCreating] = useState<boolean>(false);
 
     const handleCreateRoom = async () => {
@@ -19,12 +19,11 @@ export const useRoom = (): UseCreateRoomReturn => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/create-room`, { method: 'GET' });
             const data = await response.json();
-            const roomId = data.roomId;
+            const roomID = data.roomID;
 
             setRoomType("Create");
-            setRoomID(roomId);
 
-            router.push(`/room/${roomId}`, { shallow: true } as any);
+            router.push(`/room/${roomID}`, { shallow: true } as any);
         } catch (error) {
             setIsCreating(false);
             console.error('Error getting room:', error);

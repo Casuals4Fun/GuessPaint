@@ -8,7 +8,7 @@ const PlayerName = () => {
 
     const handlePlayerName = () => {
         if (!name.trim()) return toast.warning("Enter your name to proceed!");
-        setPlayerName(name)
+        setPlayerName(name);
     }
 
     return (

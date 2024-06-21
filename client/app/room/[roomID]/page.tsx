@@ -12,16 +12,13 @@ const InviteRoom = () => {
     const params = useParams();
     const roomID = params!.roomID;
 
-    const { playerName, roomType, setRoomID, setPreference, invite, setInvite } = useInviteStore();
+    const { playerName, roomType, setPreference, invite, setInvite } = useInviteStore();
 
     useEffect(() => {
         if (roomID) {
-            setRoomID(roomID);
             setPreference("Share");
         }
-    }, [roomID, setRoomID, setPreference]);
 
-    useEffect(() => {
         if (roomType === "Create") {
             toast.success("Room created!");
             setInvite(true);
@@ -30,12 +27,13 @@ const InviteRoom = () => {
             toast.success("Room joined!");
             setInvite(false);
         }
-    }, [roomType, setInvite]);
+    }, []);
+    // }, [roomID, roomType, setPreference, setInvite]);
 
     return (
         !playerName ? <PlayerName /> : (
             <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
-                <RoomCanvas />
+                {roomID && <RoomCanvas />}
                 {invite && <Invite />}
             </div>
         )
