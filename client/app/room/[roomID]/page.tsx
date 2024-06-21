@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useInviteStore } from '@/store';
@@ -42,4 +42,4 @@ const InviteRoom = () => {
     )
 };
 
-export default InviteRoom
+export default React.memo(InviteRoom);

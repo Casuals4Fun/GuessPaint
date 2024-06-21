@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import useWindowSize from '@/utils/useWindowSize';
 import { useDraw } from '@/hooks/useDraw';
-import { useInviteStore, useSocketStore, useToolbarStore } from '@/store';
+import { useInviteStore, useToolbarStore } from '@/store';
 import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
@@ -13,29 +13,50 @@ const RoomCanvas = () => {
     const { width, height } = useWindowSize();
     const { roomID, playerName } = useInviteStore();
     const { brushThickness, color } = useToolbarStore();
-    const { setConnected } = useSocketStore();
-    const socket = connectSocket(setConnected);
+    const socketRef = useRef(connectSocket());
+    const setupCompleted = useRef(false);
+    const joinedRoomRef = useRef(false);
 
     const { canvasRef, onMouseDown, clear } = useDraw(createLine);
+    
     function createLine({ prevPoint, currPoint, ctx }: Draw) {
-        socket.emit('draw-line', ({ prevPoint, currPoint, color, brushThickness }));
+        socketRef.current.emit('draw-line', { prevPoint, currPoint, color, brushThickness });
         drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
     };
 
     const setupSocketListeners = useCallback(() => {
+        if (setupCompleted.current) {
+            return () => {};
+        }
+
         const ctx = canvasRef.current?.getContext('2d');
 
-        socket.emit('join-room', roomID);
+        if (!joinedRoomRef.current) {
+            socketRef.current.emit('join-room', { roomID, playerName });
+            joinedRoomRef.current = true;
+        }
 
-        socket.emit('client-ready');
-
-        socket.on('get-canvas-state', () => {
-            if (!canvasRef.current?.toDataURL()) return;
-
-            socket.emit('canvas-state', canvasRef.current.toDataURL());
+        socketRef.current.on('new-player', (playerName) => {
+            console.log(`${playerName} has joined the room.`);
         });
 
-        socket.on('canvas-state-from-server', (state: string) => {
+        socketRef.current.on('players-in-room', (players) => {
+            console.log('Players in room:', players);
+        });
+
+        socketRef.current.on('player-left', (playerName) => {
+            console.log(`${playerName} has left the room.`);
+        });
+
+        socketRef.current.emit('client-ready');
+
+        socketRef.current.on('get-canvas-state', () => {
+            if (!canvasRef.current?.toDataURL()) return;
+
+            socketRef.current.emit('canvas-state', canvasRef.current.toDataURL());
+        });
+
+        socketRef.current.on('canvas-state-from-server', (state: string) => {
             const image = new Image();
             image.src = state;
             image.onload = () => {
@@ -43,21 +64,28 @@ const RoomCanvas = () => {
             };
         });
 
-        socket.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }: DrawLineProps) => {
+        socketRef.current.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }: DrawLineProps) => {
             if (!ctx) return;
 
             drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
         });
 
-        socket.on('clear', clear);
+        socketRef.current.on('clear', clear);
+
+        setupCompleted.current = true;
 
         return () => {
-            socket.off('get-canvas-state');
-            socket.off('canvas-state-from-server');
-            socket.off('draw-line');
-            socket.off('clear');
-        }
-    }, [canvasRef, socket, roomID, clear]);
+            socketRef.current.off('new-player');
+            socketRef.current.off('players-in-room');
+            socketRef.current.off('player-left');
+            socketRef.current.off('get-canvas-state');
+            socketRef.current.off('canvas-state-from-server');
+            socketRef.current.off('draw-line');
+            socketRef.current.off('clear');
+            setupCompleted.current = false;
+        };
+    }, []);
+    // }, [canvasRef, roomID, playerName, clear]);
 
     useEffect(() => {
         const cleanup = setupSocketListeners();
@@ -71,7 +99,7 @@ const RoomCanvas = () => {
             <RoomToolbar
                 clear={() => {
                     clear();
-                    socket.emit('clear');
+                    socketRef.current.emit('clear');
                 }}
             />
 
@@ -82,10 +110,10 @@ const RoomCanvas = () => {
                 ref={canvasRef}
                 onMouseDown={onMouseDown}
                 onTouchStart={onMouseDown}
-                style={{ 
+                style={{
                     background: '#FFF',
                     cursor: "url(https://icons.iconarchive.com/icons/github/octicons/24/pencil-16-icon.png) 0 30, crosshair"
-                 }}
+                }}
             />
 
             <RoomSidebar />
@@ -93,4 +121,4 @@ const RoomCanvas = () => {
     )
 }
 
-export default RoomCanvas
+export default React.memo(RoomCanvas);

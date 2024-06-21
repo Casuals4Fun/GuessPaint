@@ -25,10 +25,7 @@ type ToolbarState = {
     setOpenCanvasBg: Dispatch<SetStateAction<boolean>>
 };
 
-type SocketState = {
-    connected: boolean,
-    setConnected: Dispatch<SetStateAction<boolean>>
-}
+// type SocketState = {}
 
 type InviteState = {
     playerName: string,

@@ -27,10 +27,26 @@ const io = new Server(server, {
 });
 
 let socketRoom = {};
+let roomPlayers = {};
+let socketPlayerNames = {};
+
 io.on('connection', socket => {
-    socket.on('join-room', roomID => {
+    socket.on('join-room', ({ roomID, playerName }) => {
+        console.log("Called Join Room");
+
         socket.join(roomID);
         socketRoom[socket.id] = roomID;
+        socketPlayerNames[socket.id] = playerName;
+
+        if (!roomPlayers[roomID]) {
+            roomPlayers[roomID] = [];
+        }
+        if (!roomPlayers[roomID].includes(playerName)) {
+            roomPlayers[roomID].push(playerName);
+        }
+
+        socket.broadcast.to(roomID).emit('new-player', playerName);
+        socket.emit('players-in-room', roomPlayers[roomID]);
     });
 
     socket.on('client-ready', () => {
@@ -64,7 +80,26 @@ io.on('connection', socket => {
     });
 
     socket.on('disconnect', () => {
+        const roomID = socketRoom[socket.id];
+        const playerName = socketPlayerNames[socket.id];
+
+        if (roomID && roomPlayers[roomID]) {
+            const index = roomPlayers[roomID].indexOf(playerName);
+            if (index !== -1) {
+                roomPlayers[roomID].splice(index, 1);
+            }
+
+            if (roomPlayers[roomID].length === 0) {
+                delete roomPlayers[roomID];
+            }
+        }
+
         delete socketRoom[socket.id];
+        delete socketPlayerNames[socket.id];
+
+        if (roomID) {
+            io.to(roomID).emit('player-left', playerName);
+        }
     });
 });
 
@@ -72,7 +107,10 @@ app.get('/', async (req, res, next) => {
     try {
         res.send({
             status: 201,
-            message: "GuessPaint API running!"
+            message: "GuessPaint API running!",
+            socketRoom,
+            roomPlayers,
+            socketPlayerNames
         });
     } catch (error) {
         res.send({ message: error });

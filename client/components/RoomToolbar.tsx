@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import { useInviteStore, useSocketStore, useToolbarStore } from '@/store';
+import { useInviteStore, useToolbarStore } from '@/store';
 import { HexColorPicker } from 'react-colorful';
 import { AiOutlineClose } from 'react-icons/ai';
 import { PiEraserFill, PiPaintBrushFill, PiPencil, PiShareNetworkFill } from 'react-icons/pi';
@@ -12,8 +12,7 @@ interface ToolbarProps {
 };
 
 const RoomToolbar = ({ clear }: ToolbarProps) => {
-    const { setConnected } = useSocketStore();
-    const socket = connectSocket(setConnected);
+    const socket = connectSocket();
 
     const { setInvite } = useInviteStore();
     const {

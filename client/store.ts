@@ -13,10 +13,7 @@ export const useToolbarStore = create<ToolbarState>((set) => ({
     setOpenCanvasBg: (openCanvasBg: boolean) => set({ openCanvasBg: openCanvasBg })
 }));
 
-export const useSocketStore = create<SocketState>((set) => ({
-    connected: false,
-    setConnected: (connected: boolean) => set({ connected: connected })
-}));
+// export const useSocketStore = create<SocketState>((set) => ({ }));
 
 export const useInviteStore = create<InviteState>((set) => ({
     playerName: "",

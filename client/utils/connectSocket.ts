@@ -1,9 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
 import { io, Socket } from "socket.io-client";
 
 let socketInstance: Socket | null = null;
 
-export const connectSocket = (setConnected: Dispatch<SetStateAction<boolean>>) => {
+export const connectSocket = () => {
     if (!socketInstance) {
         socketInstance = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
             extraHeaders: {
@@ -12,10 +11,11 @@ export const connectSocket = (setConnected: Dispatch<SetStateAction<boolean>>) =
         });
 
         socketInstance.on('connect', () => {
-            setConnected(true);
+            console.log('Connected to socket server');
         });
+
         socketInstance.on('disconnect', () => {
-            setConnected(false);
+            console.log('Disconnected from socket server');
         });
     }
 
