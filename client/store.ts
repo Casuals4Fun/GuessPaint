@@ -16,8 +16,6 @@ export const useToolbarStore = create<ToolbarState>((set) => ({
 // export const useSocketStore = create<SocketState>((set) => ({ }));
 
 export const useInviteStore = create<InviteState>((set) => ({
-    playerName: localStorage.getItem('playerName') || "",
-    setPlayerName: (name: string) => set({ playerName: name }),
     roomType: "",
     setRoomType: (roomType: string) => set({ roomType: roomType }),
     invite: false,

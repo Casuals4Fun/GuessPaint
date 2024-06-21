@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
+import usePlayerName from '@/hooks/usePlayerName';
 import { useInviteStore } from '@/store';
 import RoomCanvas from '@/components/RoomCanvas';
 import Invite from '@/components/Invite';
@@ -12,7 +13,8 @@ const InviteRoom = () => {
     const params = useParams();
     const roomID = params!.roomID;
 
-    const { playerName, roomType, setPreference, invite, setInvite } = useInviteStore();
+    const { playerName, savePlayerName, loading } = usePlayerName();
+    const { roomType, setPreference, invite, setInvite } = useInviteStore();
 
     useEffect(() => {
         if (roomID) {
@@ -30,13 +32,12 @@ const InviteRoom = () => {
     }, []);
     // }, [roomID, roomType, setPreference, setInvite]);
 
-    return (
-        !playerName ? <PlayerName /> : (
-            <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
-                {roomID && <RoomCanvas />}
-                {invite && <Invite />}
-            </div>
-        )
+    if (loading) return null;
+    return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : (
+        <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
+            {roomID && <RoomCanvas />}
+            {invite && <Invite />}
+        </div>
     )
 };
 

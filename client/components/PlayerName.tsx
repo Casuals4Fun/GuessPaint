@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { useInviteStore } from "@/store";
 import { toast } from "sonner";
 
-const PlayerName = () => {
+interface PlayerNameProps {
+    onSavePlayerName: (name: string) => void;
+}
+
+const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
     const [name, setName] = useState('');
-    const { setPlayerName } = useInviteStore();
 
     const handlePlayerName = () => {
         if (!name.trim()) return toast.warning("Enter your name to proceed!");
-        setPlayerName(name);
-    }
+        onSavePlayerName(name);
+    };
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -35,7 +37,7 @@ const PlayerName = () => {
                     <div className='w-full h-[1px] bg-gray-200' />
                     <div className='flex justify-end items-center'>
                         <button
-                            className='bg-black hover:bg-white text-white hover:text-black duration-200"} h-[40px] py-2 px-4 rounded-lg'
+                            className='bg-black hover:bg-white text-white hover:text-black duration-200 h-[40px] py-2 px-4 rounded-lg'
                             onClick={handlePlayerName}
                         >
                             Proceed
@@ -47,4 +49,4 @@ const PlayerName = () => {
     )
 }
 
-export default PlayerName
+export default PlayerName;

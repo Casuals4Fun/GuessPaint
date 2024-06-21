@@ -35,8 +35,6 @@ type SidebarState = {
 };
 
 type InviteState = {
-    playerName: string,
-    setPlayerName: Dispatch<SetStateAction<string>>,
     roomType: string,
     setRoomType: Dispatch<SetStateAction<string>>,
     invite: boolean,

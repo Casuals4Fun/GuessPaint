@@ -16,7 +16,6 @@ const RoomCanvas: React.FC = () => {
     const roomID = params.roomID;
 
     const { width, height } = useWindowSize();
-    const { playerName } = useInviteStore();
     const { brushThickness, color } = useToolbarStore();
     const { setPlayers, addPlayer, removePlayer, setAssignedPlayerName } = useSidebarStore();
 
@@ -39,7 +38,9 @@ const RoomCanvas: React.FC = () => {
         const ctx = canvasRef.current?.getContext('2d');
 
         if (!joinedRoomRef.current) {
-            socketRef.current.emit('join-room', { roomID, playerName });
+            if (typeof window !== 'undefined' && localStorage.getItem('playerName')) {
+                socketRef.current.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
+            }
 
             socketRef.current.on('assign-player-name', (assignedName: string) => {
                 setAssignedPlayerName(assignedName);
