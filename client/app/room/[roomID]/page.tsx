@@ -19,18 +19,17 @@ const InviteRoom = () => {
     useEffect(() => {
         if (roomID) {
             setPreference("Share");
-        }
 
-        if (roomType === "Create") {
-            toast.success("Room created!");
-            setInvite(true);
-        }
-        else if (roomType === "Join") {
-            toast.success("Room joined!");
-            setInvite(false);
+            if (roomType === "Create") {
+                toast.success("Room created!");
+                setInvite(true);
+            }
+            else if (roomType === "Join") {
+                toast.success("Room joined!");
+                setInvite(false);
+            }
         }
     }, []);
-    // }, [roomID, roomType, setPreference, setInvite]);
 
     if (loading) return null;
     return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : (

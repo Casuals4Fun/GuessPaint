@@ -1,10 +1,8 @@
-"use client"
-
 import React, { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import useWindowSize from '@/utils/useWindowSize';
 import { useDraw } from '@/hooks/useDraw';
-import { useInviteStore, useSidebarStore, useToolbarStore } from '@/store';
+import { useSidebarStore, useToolbarStore } from '@/store';
 import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
@@ -17,7 +15,7 @@ const RoomCanvas: React.FC = () => {
 
     const { width, height } = useWindowSize();
     const { brushThickness, color } = useToolbarStore();
-    const { setPlayers, addPlayer, removePlayer, setAssignedPlayerName } = useSidebarStore();
+    const { players, setPlayers, addPlayer, removePlayer, setAssignedPlayerName } = useSidebarStore();
 
     const socketRef = useRef(connectSocket());
     const setupCompleted = useRef(false);
@@ -38,13 +36,14 @@ const RoomCanvas: React.FC = () => {
         const ctx = canvasRef.current?.getContext('2d');
 
         if (!joinedRoomRef.current) {
-            if (typeof window !== 'undefined' && localStorage.getItem('playerName')) {
+            if (typeof window !== 'undefined') {
                 socketRef.current.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
-            }
 
-            socketRef.current.on('assign-player-name', (assignedName: string) => {
-                setAssignedPlayerName(assignedName);
-            });
+                socketRef.current.on('assign-player-name', (assignedName: string) => {
+                    setAssignedPlayerName(assignedName);
+                    localStorage.setItem('playerName', assignedName);
+                });
+            }
 
             joinedRoomRef.current = true;
         }
@@ -54,9 +53,11 @@ const RoomCanvas: React.FC = () => {
         });
 
         socketRef.current.on('new-player', (playerName: string) => {
-            addPlayer(playerName);
-            const originalPlayerName = playerName.split('#')[0];
-            toast.success(`${originalPlayerName} joined`);
+            if (!players.includes(playerName)) {
+                addPlayer(playerName);
+                const originalPlayerName = playerName.split('#')[0];
+                toast.success(`${originalPlayerName} joined`);
+            }
         });
 
         socketRef.current.on('player-left', (playerName: string) => {
@@ -102,7 +103,6 @@ const RoomCanvas: React.FC = () => {
             setupCompleted.current = false;
         };
     }, []);
-    // }, [addPlayer, clear, canvasRef, removePlayer, roomID, playerName, setPlayers, setAssignedPlayerName]);
 
     useEffect(() => {
         const cleanup = setupSocketListeners();

@@ -20,50 +20,64 @@ const corsOptions = {
     origin: '*',
     credentials: true,
     optionSuccessStatus: 200,
-}
+};
 app.use(cors(corsOptions));
+
 const io = new Server(server, {
-    cors: corsOptions
+    cors: corsOptions,
 });
 
-let socketRoom = {};
+let rooms = {};
 let roomPlayers = {};
-let socketPlayerNames = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
-        const uniquePlayerName = `${playerName}#${Date.now()}`;
-    
-        socket.join(roomID);
-        socketRoom[socket.id] = roomID;
-        socketPlayerNames[socket.id] = uniquePlayerName;
-    
-        if (!roomPlayers[roomID]) {
-            roomPlayers[roomID] = [];
+        const uniquePlayerName = `${playerName.split('#')[0]}#${socket.id}`;
+
+        if (rooms[socket.id]) {
+            const oldRoomID = rooms[socket.id];
+            const oldRoomPlayers = roomPlayers[oldRoomID];
+
+            if (oldRoomPlayers) {
+                const playerIndex = oldRoomPlayers.indexOf(uniquePlayerName);
+                if (playerIndex !== -1) {
+                    oldRoomPlayers.splice(playerIndex, 1);
+                    if (oldRoomPlayers.length === 0) {
+                        delete roomPlayers[oldRoomID];
+                    }
+                }
+            }
         }
-        roomPlayers[roomID].push(uniquePlayerName);
-    
+
+        socket.join(roomID);
+        rooms[socket.id] = roomID;
+
+        if (!roomPlayers[roomID]) roomPlayers[roomID] = [];
+        if (!roomPlayers[roomID].includes(uniquePlayerName)) {
+            roomPlayers[roomID].push(uniquePlayerName);
+        }
+
         socket.emit('assign-player-name', uniquePlayerName);
-        socket.broadcast.to(roomID).emit('new-player', uniquePlayerName);
+        socket.broadcast.to(roomID).emit('new-player', playerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
-    });    
+    });
 
     socket.on('client-ready', () => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             socket.broadcast.to(roomID).emit('get-canvas-state');
         }
     });
 
     socket.on('canvas-state', (state) => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             socket.broadcast.to(roomID).emit('canvas-state-from-server', state);
         }
     });
 
     socket.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }) => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             io.to(roomID).emit('draw-line', {
                 prevPoint, currPoint, color, brushThickness
@@ -72,31 +86,32 @@ io.on('connection', socket => {
     });
 
     socket.on('clear', () => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             io.to(roomID).emit('clear');
         }
     });
 
     socket.on('disconnect', () => {
-        const roomID = socketRoom[socket.id];
-        const playerName = socketPlayerNames[socket.id];
-
+        const roomID = rooms[socket.id];
+        let playerName = null;
         if (roomID && roomPlayers[roomID]) {
-            const index = roomPlayers[roomID].indexOf(playerName);
-            if (index !== -1) {
-                roomPlayers[roomID].splice(index, 1);
-            }
+            playerName = roomPlayers[roomID].find(name => name.includes(socket.id));
 
-            if (roomPlayers[roomID].length === 0) {
-                delete roomPlayers[roomID];
+            if (playerName) {
+                const index = roomPlayers[roomID].indexOf(playerName);
+                if (index !== -1) {
+                    roomPlayers[roomID].splice(index, 1);
+                }
+                if (roomPlayers[roomID].length === 0) {
+                    delete roomPlayers[roomID];
+                }
             }
         }
 
-        delete socketRoom[socket.id];
-        delete socketPlayerNames[socket.id];
+        delete rooms[socket.id];
 
-        if (roomID) {
+        if (roomID && playerName) {
             io.to(roomID).emit('player-left', playerName);
         }
     });
@@ -105,11 +120,8 @@ io.on('connection', socket => {
 app.get('/', async (req, res, next) => {
     try {
         res.send({
-            status: 201,
-            message: "GuessPaint API running!",
-            socketRoom,
-            roomPlayers,
-            socketPlayerNames
+            status: 201, message: "GuessPaint API running!",
+            rooms, roomPlayers
         });
     } catch (error) {
         res.send({ message: error });
@@ -117,8 +129,26 @@ app.get('/', async (req, res, next) => {
 });
 
 app.get('/create-room', (req, res) => {
-    const roomID = generateUniqueRoomCode(socketRoom);
+    const roomID = generateUniqueRoomCode(rooms);
     res.json({ roomID });
+});
+
+app.get('/join-room', (req, res) => {
+    const { roomID } = req.query;
+
+    if (roomPlayers[roomID]) {
+        res.json({ success: true, roomID });
+    } else {
+        res.json({ success: false });
+    }
+});
+
+app.get('/list-rooms', (req, res) => {
+    const rooms = Object.keys(roomPlayers).map(roomID => ({
+        roomID,
+        playerCount: roomPlayers[roomID].length
+    }));
+    res.json(rooms);
 });
 
 const PORT = process.env.PORT || 5000;

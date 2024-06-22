@@ -1,4 +1,4 @@
-export function generateUniqueRoomCode(socketRoom) {
+export function generateUniqueRoomCode(rooms) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
 
@@ -11,7 +11,7 @@ export function generateUniqueRoomCode(socketRoom) {
 
     generateCode();
 
-    while (Object.values(socketRoom).includes(code)) {
+    while (Object.values(rooms).includes(code)) {
         generateCode();
     }
 
