@@ -29,7 +29,6 @@ type SidebarState = {
     players: string[];
     setPlayers: (players: string[]) => void;
     addPlayer: (player: string) => void;
-    removePlayer: (player: string) => void;
     assignedPlayerName: string;
     setAssignedPlayerName: (playerName: string) => void;
 };

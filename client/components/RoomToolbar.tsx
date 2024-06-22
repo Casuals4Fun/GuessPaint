@@ -5,15 +5,12 @@ import { useInviteStore, useToolbarStore } from '@/store';
 import { HexColorPicker } from 'react-colorful';
 import { AiOutlineClose } from 'react-icons/ai';
 import { PiEraserFill, PiPaintBrushFill, PiPencil, PiShareNetworkFill } from 'react-icons/pi';
-import { connectSocket } from '@/utils/connectSocket';
 
 interface ToolbarProps {
     clear: () => void
 };
 
 const RoomToolbar = ({ clear }: ToolbarProps) => {
-    const socket = connectSocket();
-
     const { setInvite } = useInviteStore();
     const {
         colorPicker, setColorPicker,
@@ -22,7 +19,7 @@ const RoomToolbar = ({ clear }: ToolbarProps) => {
     } = useToolbarStore();
 
     return (
-        <div className='absolute top-0 left-0 right-0 flex items-center justify-between p-2 bg-gray-300'>
+        <div className='absolute top-0 left-0 md:left-auto md:w-[400px] lg:w-[450px] right-0 flex items-center justify-between p-2 bg-gray-300 md:border-l border-gray-400'>
             <div className="flex gap-2">
                 <div className='relative'>
                     <button

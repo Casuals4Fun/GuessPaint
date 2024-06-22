@@ -16,7 +16,7 @@ import { BarLoader } from 'react-spinners';
 
 const Invite = () => {
     const params = useParams();
-    const roomID = params.roomID;
+    const roomID = params.roomID as string;
     const { invite, setInvite, preference, setPreference } = useInviteStore();
 
     return (
@@ -174,15 +174,13 @@ const JoinRoom = () => {
                 <p className='text-[20px] text-center mb-3'>
                     Available Rooms
                 </p>
-                {isLoadingRooms ? "Fetching rooms" : rooms.length == 0 ? "No rooms" : (
+                {isLoadingRooms ? <BarLoader height={4} width={50} className='mx-auto' /> : rooms.length == 0 ? "No rooms" : (
                     <ul className='flex-1 flex flex-col gap-2'>
                         {rooms.map((item, i) => (
                             <li key={i} className='p-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer'>
                                 <Link href={`/room/${item.roomID}`} className='flex justify-between' onClick={() => setInvite(false)}>
                                     <p>{item.roomID}</p>
-                                    <p>{item.playerCount ? (
-                                        <>{item.playerCount} {item.playerCount > 0 ? "players" : "player"}</>
-                                    ) : "No players"}</p>
+                                    <p>{item.playerCount === 0 ? "No players" : <>{item.playerCount} {item.playerCount === 1 ? "player" : "players"}</>}</p>
                                 </Link>
                             </li>
                         ))}

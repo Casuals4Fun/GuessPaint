@@ -112,7 +112,7 @@ io.on('connection', socket => {
         delete rooms[socket.id];
 
         if (roomID && playerName) {
-            io.to(roomID).emit('player-left', playerName);
+            io.to(roomID).emit('player-left', { playerName, players: roomPlayers[roomID] });
         }
     });
 });
