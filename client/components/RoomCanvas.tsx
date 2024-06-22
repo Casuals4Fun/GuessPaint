@@ -36,7 +36,7 @@ const RoomCanvas: React.FC = () => {
         const ctx = canvasRef.current?.getContext('2d');
 
         if (!joinedRoomRef.current) {
-            if (typeof window !== 'undefined' && localStorage.getItem('playerName')) {
+            if (typeof window !== 'undefined') {
                 socketRef.current.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
 
                 socketRef.current.on('assign-player-name', (assignedName: string) => {

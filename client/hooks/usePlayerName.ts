@@ -14,9 +14,9 @@ const usePlayerName = () => {
 
     const savePlayerName = (name: string) => {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('playerName', `${name}#${Date.now()}`);
+            localStorage.setItem('playerName', name);
         }
-        setPlayerName(`${name}#${Date.now()}`);
+        setPlayerName(name);
     };
 
     return {

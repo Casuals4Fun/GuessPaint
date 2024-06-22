@@ -29,19 +29,19 @@ const io = new Server(server, {
 
 let rooms = {};
 let roomPlayers = {};
-let allPlayers = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
         socket.join(roomID);
         rooms[socket.id] = roomID;
-        allPlayers[socket.id] = playerName;
+
+        const uniquePlayerName = `${playerName.split('#')[0]}#${socket.id}`;
 
         if (!roomPlayers[roomID]) roomPlayers[roomID] = [];
-        roomPlayers[roomID].push(playerName);
+        roomPlayers[roomID].push(uniquePlayerName);
 
-        socket.emit('assign-player-name', playerName);
-        socket.broadcast.to(roomID).emit('new-player', playerName);
+        socket.emit('assign-player-name', uniquePlayerName);
+        socket.broadcast.to(roomID).emit('new-player', uniquePlayerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
     });
 
@@ -77,23 +77,24 @@ io.on('connection', socket => {
 
     socket.on('disconnect', () => {
         const roomID = rooms[socket.id];
-        const playerName = allPlayers[socket.id];
-
+        let playerName = null;
         if (roomID && roomPlayers[roomID]) {
-            const index = roomPlayers[roomID].indexOf(playerName);
-            if (index !== -1) {
-                roomPlayers[roomID].splice(index, 1);
-            }
+            playerName = roomPlayers[roomID].find(name => name.includes(socket.id));
 
-            if (roomPlayers[roomID].length === 0) {
-                delete roomPlayers[roomID];
+            if (playerName) {
+                const index = roomPlayers[roomID].indexOf(playerName);
+                if (index !== -1) {
+                    roomPlayers[roomID].splice(index, 1);
+                }
+                if (roomPlayers[roomID].length === 0) {
+                    delete roomPlayers[roomID];
+                }
             }
         }
 
         delete rooms[socket.id];
-        delete allPlayers[socket.id];
 
-        if (roomID) {
+        if (roomID && playerName) {
             io.to(roomID).emit('player-left', playerName);
         }
     });
@@ -103,7 +104,7 @@ app.get('/', async (req, res, next) => {
     try {
         res.send({
             status: 201, message: "GuessPaint API running!",
-            rooms, roomPlayers, allPlayers
+            rooms, roomPlayers
         });
     } catch (error) {
         res.send({ message: error });
