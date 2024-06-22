@@ -112,7 +112,7 @@ io.on('connection', socket => {
         delete rooms[socket.id];
 
         if (roomID && playerName) {
-            io.to(roomID).emit('player-left', playerName);
+            io.to(roomID).emit('player-left', { playerName, players: roomPlayers[roomID] });
         }
     });
 });
@@ -149,6 +149,19 @@ app.get('/list-rooms', (req, res) => {
         playerCount: roomPlayers[roomID].length
     }));
     res.json(rooms);
+});
+
+app.get('/random-room', (req, res) => {
+    const availableRoomIDs = Object.keys(roomPlayers).filter(roomID => roomPlayers[roomID].length > 0);
+
+    if (availableRoomIDs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableRoomIDs.length);
+        const randomRoomID = availableRoomIDs[randomIndex];
+        res.json({ success: true, roomID: randomRoomID });
+    } else {
+        const newRoomID = generateUniqueRoomCode(rooms);
+        res.json({ success: true, roomID: newRoomID });
+    }
 });
 
 const PORT = process.env.PORT || 5000;

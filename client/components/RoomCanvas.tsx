@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import useWindowSize from '@/utils/useWindowSize';
 import { useDraw } from '@/hooks/useDraw';
@@ -7,7 +8,6 @@ import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
 import RoomSidebar from './RoomSidebar';
-import { useParams } from 'next/navigation';
 
 const RoomCanvas: React.FC = () => {
     const params = useParams();
@@ -15,7 +15,7 @@ const RoomCanvas: React.FC = () => {
 
     const { width, height } = useWindowSize();
     const { brushThickness, color } = useToolbarStore();
-    const { players, setPlayers, addPlayer, removePlayer, setAssignedPlayerName } = useSidebarStore();
+    const { players, setPlayers, addPlayer, setAssignedPlayerName } = useSidebarStore();
 
     const socketRef = useRef(connectSocket());
     const setupCompleted = useRef(false);
@@ -28,10 +28,10 @@ const RoomCanvas: React.FC = () => {
         drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
     };
 
-    const setupSocketListeners = useCallback(() => {
-        if (setupCompleted.current) {
-            return () => { };
-        }
+    useEffect(() => {
+        let cleanupFunction = () => { };
+
+        if (setupCompleted.current) return;
 
         const ctx = canvasRef.current?.getContext('2d');
 
@@ -60,17 +60,17 @@ const RoomCanvas: React.FC = () => {
             }
         });
 
-        socketRef.current.on('player-left', (playerName: string) => {
-            removePlayer(playerName);
+        socketRef.current.on('player-left', ({ playerName, players }) => {
+            setPlayers(players);
             const originalPlayerName = playerName.split('#')[0];
             toast.error(`${originalPlayerName} left`);
         });
+
 
         socketRef.current.emit('client-ready');
 
         socketRef.current.on('get-canvas-state', () => {
             if (!canvasRef.current?.toDataURL()) return;
-
             socketRef.current.emit('canvas-state', canvasRef.current.toDataURL());
         });
 
@@ -84,7 +84,6 @@ const RoomCanvas: React.FC = () => {
 
         socketRef.current.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }: DrawLineProps) => {
             if (!ctx) return;
-
             drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
         });
 
@@ -92,7 +91,7 @@ const RoomCanvas: React.FC = () => {
 
         setupCompleted.current = true;
 
-        return () => {
+        cleanupFunction = () => {
             socketRef.current.off('new-player');
             socketRef.current.off('players-in-room');
             socketRef.current.off('player-left');
@@ -102,14 +101,9 @@ const RoomCanvas: React.FC = () => {
             socketRef.current.off('clear');
             setupCompleted.current = false;
         };
-    }, []);
 
-    useEffect(() => {
-        const cleanup = setupSocketListeners();
-        return () => {
-            cleanup();
-        };
-    }, [setupSocketListeners]);
+        return cleanupFunction;
+    }, []);
 
     return (
         <div className='relative'>
@@ -133,7 +127,7 @@ const RoomCanvas: React.FC = () => {
                 }}
             />
 
-            <RoomSidebar />
+            <RoomSidebar socketRef={socketRef} />
         </div>
     );
 }
