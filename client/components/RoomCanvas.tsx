@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import useWindowSize from '@/utils/useWindowSize';
 import { useDraw } from '@/hooks/useDraw';
@@ -7,7 +8,6 @@ import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
 import RoomSidebar from './RoomSidebar';
-import { useParams } from 'next/navigation';
 
 const RoomCanvas: React.FC = () => {
     const params = useParams();

@@ -8,6 +8,7 @@ import { useInviteStore } from '@/store';
 import { useRoom } from '@/hooks/useRoom';
 import { IoIosArrowBack } from 'react-icons/io';
 import { AiOutlineClose } from 'react-icons/ai';
+import { FaPlay } from "react-icons/fa";
 import { GrAdd } from 'react-icons/gr';
 import { GoPeople } from 'react-icons/go';
 import { BsFillClipboardCheckFill, BsFillClipboardFill } from 'react-icons/bs';
@@ -22,7 +23,7 @@ const Invite = () => {
     return (
         <div className="fixed inset-0 flex items-center justify-center z-30">
             <div className="bg-black opacity-70 fixed inset-0 z-20"></div>
-            <div className={`bg-white w-[95%] md:w-[500px] ${preference === "Join" ? "h-[500px]" : preference !== "Share" ? "h-[214px]" : "min-h-[214px]"} mx-auto rounded-lg shadow-lg overflow-hidden z-30 relative`}>
+            <div className={`bg-white w-[95%] md:w-[500px] ${preference === "Join" ? "h-[500px]" : preference !== "" && preference !== "Share" ? "h-[214px]" : "min-h-[214px]"} grid place-items-center mx-auto rounded-lg shadow-lg overflow-hidden z-30 relative`}>
                 {(preference !== "Share" && preference !== "") && (
                     <button
                         className='absolute left-0 top-0 w-[30px] h-[30px] bg-gray-100 hover:bg-black text-black hover:text-white duration-200 flex items-center justify-center'
@@ -42,7 +43,7 @@ const Invite = () => {
                         <AiOutlineClose />
                     </button>
                 )}
-                <div className="p-5 h-full">
+                <div className="w-full h-full p-5">
                     {preference === "" ? (
                         <PreferenceSelector />
                     ) : preference === "Join" ? (
@@ -57,22 +58,28 @@ const Invite = () => {
 };
 
 const PreferenceSelector = () => {
-    const { handleCreateRoom, isCreating } = useRoom();
+    const { isPlaying, handleRandomRoom, handleCreateRoom, isCreating } = useRoom();
     const { setPreference } = useInviteStore();
 
     return (
-        <div className='h-full flex flex-col justify-between'>
-            <div className='h-full flex items-center justify-center gap-20'>
-                {isCreating ? <div className='w-[96px] flex items-center justify-center'><BarLoader height={4} width={50} /></div> : (
-                    <button className='flex flex-col items-center gap-1' onClick={handleCreateRoom} disabled={isCreating}>
-                        <div className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'>
-                            <GrAdd size={30} />
-                        </div>
-                        <div className='cursor-pointer'>
-                            Create Room
-                        </div>
-                    </button>
-                )}
+        <div className='h-full flex flex-col gap-6 justify-between'>
+            <button className='w-fit mx-auto flex flex-col items-center gap-1' onClick={handleRandomRoom} disabled={isPlaying}>
+                <div className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'>
+                    {isPlaying ? <BarLoader height={4} width={50} /> : <FaPlay size={30} className='ml-1.5 mt-1' />}
+                </div>
+                <div className='cursor-pointer'>
+                    Play
+                </div>
+            </button>
+            <div className='h-full flex items-center justify-center gap-6 md:gap-20 flex-wrap'>
+                <button className='flex flex-col items-center gap-1' onClick={handleCreateRoom} disabled={isCreating}>
+                    <div className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'>
+                        {isCreating ? <BarLoader height={4} width={50} /> : <GrAdd size={30} />}
+                    </div>
+                    <div className='cursor-pointer'>
+                        Create Room
+                    </div>
+                </button>
                 <div className='flex flex-col items-center gap-1'>
                     <div
                         className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'
@@ -194,7 +201,7 @@ const JoinRoom = () => {
 const ShareRoom = () => {
     const params = useParams();
     const roomID = params.roomID as string;
-    const { handleCreateRoom, isCreating } = useRoom();
+    const { handleRandomRoom, isPlaying, handleCreateRoom, isCreating } = useRoom();
     const { setPreference } = useInviteStore();
 
     const [hasCopied, setHasCopied] = useState<boolean>(false);
@@ -220,12 +227,12 @@ const ShareRoom = () => {
                     <p className='text-[20px] text-center'>
                         Share Invite
                     </p>
-                    <div className='relative mx-auto w-[125px] h-[125px] md:w-[150px] md:h-[150px] flex items-center justify-center'>
+                    <div className='relative mx-auto w-[125px] h-[125px] md:w-[150px] md:h-[150px] flex items-center justify-center border-2'>
                         <Image
                             width={150}
                             height={150}
                             src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`}
-                            className='absolute z-[1] top-0 left-0 object-contain border-2'
+                            className='absolute z-[1] top-0 left-0 object-contain'
                             alt="Share QR"
                         />
                         <BarLoader
@@ -254,12 +261,15 @@ const ShareRoom = () => {
                         </button>
                     </div>
                     <div className='w-full h-[1px] bg-gray-200' />
-                    <div className='flex justify-between items-center'>
-                        <button className='hover:underline text-[14px]' onClick={handleCreateRoom} disabled={isCreating}>
-                            Create new Room
+                    <div className='flex flex-wrap gap-[10px] sm:gap-0 justify-center text-md'>
+                        <button className='bg-gray-100 px-3 py-2 w-fit sm:mx-auto hover:bg-gray-200 rounded' onClick={handleRandomRoom} disabled={isPlaying}>
+                            Join Random
                         </button>
-                        <button className='hover:underline text-[14px]' onClick={() => setPreference("Join")}>
-                            Join new Room
+                        <button className='bg-gray-100 px-3 py-2 w-fit sm:mx-auto hover:bg-gray-200 rounded' onClick={handleCreateRoom} disabled={isCreating}>
+                            Create Room
+                        </button>
+                        <button className='bg-gray-100 px-3 py-2 w-fit sm:mx-auto hover:bg-gray-200 rounded' onClick={() => setPreference("Join")}>
+                            Join Room
                         </button>
                     </div>
                 </>
