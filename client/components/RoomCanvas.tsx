@@ -53,9 +53,11 @@ const RoomCanvas: React.FC = () => {
         });
 
         socketRef.current.on('new-player', (playerName: string) => {
-            addPlayer(playerName);
-            const originalPlayerName = playerName.split('#')[0];
-            toast.success(`${originalPlayerName} joined`);
+            if (!players.includes(playerName)) {
+                addPlayer(playerName);
+                const originalPlayerName = playerName.split('#')[0];
+                toast.success(`${originalPlayerName} joined`);
+            }
         });
 
         socketRef.current.on('player-left', (playerName: string) => {
@@ -108,8 +110,6 @@ const RoomCanvas: React.FC = () => {
             cleanup();
         };
     }, [setupSocketListeners]);
-
-    console.log(players);
 
     return (
         <div className='relative'>

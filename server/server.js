@@ -32,16 +32,33 @@ let roomPlayers = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
+        const uniquePlayerName = `${playerName.split('#')[0]}#${socket.id}`;
+
+        if (rooms[socket.id]) {
+            const oldRoomID = rooms[socket.id];
+            const oldRoomPlayers = roomPlayers[oldRoomID];
+
+            if (oldRoomPlayers) {
+                const playerIndex = oldRoomPlayers.indexOf(uniquePlayerName);
+                if (playerIndex !== -1) {
+                    oldRoomPlayers.splice(playerIndex, 1);
+                    if (oldRoomPlayers.length === 0) {
+                        delete roomPlayers[oldRoomID];
+                    }
+                }
+            }
+        }
+
         socket.join(roomID);
         rooms[socket.id] = roomID;
 
-        const uniquePlayerName = `${playerName.split('#')[0]}#${socket.id}`;
-
         if (!roomPlayers[roomID]) roomPlayers[roomID] = [];
-        roomPlayers[roomID].push(uniquePlayerName);
+        if (!roomPlayers[roomID].includes(uniquePlayerName)) {
+            roomPlayers[roomID].push(uniquePlayerName);
+        }
 
         socket.emit('assign-player-name', uniquePlayerName);
-        socket.broadcast.to(roomID).emit('new-player', uniquePlayerName);
+        socket.broadcast.to(roomID).emit('new-player', playerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
     });
 
