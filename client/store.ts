@@ -28,9 +28,15 @@ export const useSidebarStore = create<SidebarState>((set) => ({
     players: [],
     setPlayers: (players: string[]) => set({ players }),
     addPlayer: (player: string) => set((state) => ({ players: [...state.players, player] })),
-    removePlayer: (player: string) => set((state) => ({
-        players: state.players.filter(p => p !== player)
-    })),
+    removePlayer: (player: string) => set((state) => {
+        const index = state.players.indexOf(player);
+        if (index !== -1) {
+            const updatedPlayers = [...state.players];
+            updatedPlayers.splice(index, 1);
+            return { players: updatedPlayers };
+        }
+        return { players: state.players };
+    }),
     assignedPlayerName: '',
     setAssignedPlayerName: (playerName: string) => set({ assignedPlayerName: playerName }),
 }));

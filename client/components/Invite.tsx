@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link';
+import { useParams } from 'next/navigation'
 import { useInviteStore } from '@/store';
 import { useRoom } from '@/hooks/useRoom';
 import { IoIosArrowBack } from 'react-icons/io';
@@ -21,7 +22,7 @@ const Invite = () => {
     return (
         <div className="fixed inset-0 flex items-center justify-center z-30">
             <div className="bg-black opacity-70 fixed inset-0 z-20"></div>
-            <div className={`bg-white w-[95%] md:w-[500px] ${preference !== "Share" ? "h-[214px]" : "min-h-[214px]"} mx-auto rounded-lg shadow-lg overflow-hidden z-30 relative`}>
+            <div className={`bg-white w-[95%] md:w-[500px] ${preference === "Join" ? "h-[500px]" : preference !== "Share" ? "h-[214px]" : "min-h-[214px]"} mx-auto rounded-lg shadow-lg overflow-hidden z-30 relative`}>
                 {(preference !== "Share" && preference !== "") && (
                     <button
                         className='absolute left-0 top-0 w-[30px] h-[30px] bg-gray-100 hover:bg-black text-black hover:text-white duration-200 flex items-center justify-center'
@@ -62,7 +63,7 @@ const PreferenceSelector = () => {
     return (
         <div className='h-full flex flex-col justify-between'>
             <div className='h-full flex items-center justify-center gap-20'>
-                {isCreating ? <div className='w-[98.34px] flex items-center justify-center'><BarLoader height={4} width={50} /></div> : (
+                {isCreating ? <div className='w-[96px] flex items-center justify-center'><BarLoader height={4} width={50} /></div> : (
                     <button className='flex flex-col items-center gap-1' onClick={handleCreateRoom} disabled={isCreating}>
                         <div className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'>
                             <GrAdd size={30} />
@@ -89,22 +90,33 @@ const PreferenceSelector = () => {
 };
 
 const JoinRoom = () => {
-    const router = useRouter();
-    const { setRoomType } = useInviteStore();
+    const { setInvite } = useInviteStore();
+    const { handleJoinRoom, isJoining } = useRoom();
     const [roomID, setRoomID] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+    const [rooms, setRooms] = useState([]);
 
-    const handleJoinRoom = () => {
-        if (!roomID.length) return toast.error("Enter Room ID to proceed!");
-        setLoading(true);
+    useEffect(() => {
+        const getAllRooms = async () => {
+            setIsLoadingRooms(true);
 
-        setRoomType("Join");
-        router.push(`/room/${roomID}`, { shallow: true } as any);
-    };
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/list-rooms`, { method: 'GET' });
+                const rooms = await response.json();
+                setRooms(rooms);
+            } catch (error) {
+                console.error('Error fetching rooms:', error);
+                toast.error('Failed to fetch rooms');
+            } finally {
+                setIsLoadingRooms(false);
+            }
+        };
+        getAllRooms();
+    }, []);
 
     return (
-        <div className='h-full flex flex-col justify-between'>
-            <p className='text-[20px] text-center'>
+        <div className='h-full flex flex-col overflow-hidden'>
+            <p className='text-[20px] text-center mb-3'>
                 Join Room
             </p>
             <div className='flex items-center justify-between'>
@@ -120,19 +132,38 @@ const JoinRoom = () => {
                     />
                 </div>
             </div>
-            <div className='w-full h-[1px] bg-gray-200' />
-            <div className='flex justify-end items-center'>
+            <div className='flex justify-end items-center mt-3'>
                 <button
-                    className={`${loading ? "bg-white" : "bg-black hover:bg-white text-white hover:text-black duration-200"} w-[80px] h-[40px] py-2 px-4 rounded-lg`}
-                    onClick={handleJoinRoom}
+                    className={`${isJoining ? "bg-white" : "bg-black hover:bg-white text-white hover:text-black duration-200"} w-[80px] h-[40px] py-2 px-4 rounded-lg`}
+                    onClick={() => handleJoinRoom(roomID.toUpperCase().trim())}
                 >
-                    {loading ? (
+                    {isJoining ? (
                         <BarLoader
                             height={4}
                             width={50}
                         />
                     ) : "Join"}
                 </button>
+            </div>
+            <div className='w-full h-[1px] bg-gray-200 my-3' />
+            <div className='flex-1 flex flex-col overflow-y-auto'>
+                <p className='text-[20px] text-center mb-3'>
+                    Available Rooms
+                </p>
+                {isLoadingRooms ? "Fetching rooms" : rooms.length == 0 ? "No rooms" : (
+                    <ul className='flex-1 flex flex-col gap-2'>
+                        {rooms.map((item, i) => (
+                            <li key={i} className='p-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer'>
+                                <Link href={`/room/${item.roomID}`} className='flex justify-between' onClick={() => setInvite(false)}>
+                                    <p>{item.roomID}</p>
+                                    <p>{item.playerCount ? (
+                                        <>{item.playerCount} {item.playerCount > 0 ? "players" : "player"}</>
+                                    ) : "No players"}</p>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </div>
         </div>
     )

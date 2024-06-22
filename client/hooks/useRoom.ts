@@ -6,12 +6,15 @@ import { toast } from 'sonner';
 interface UseCreateRoomReturn {
     handleCreateRoom: () => Promise<void>;
     isCreating: boolean;
+    handleJoinRoom: (roomID: string) => Promise<string | number>;
+    isJoining: boolean;
 }
 
 export const useRoom = (): UseCreateRoomReturn => {
     const router = useRouter();
     const { setRoomType } = useInviteStore();
     const [isCreating, setIsCreating] = useState<boolean>(false);
+    const [isJoining, setIsJoining] = useState<boolean>(false);
 
     const handleCreateRoom = async () => {
         setIsCreating(true);
@@ -31,5 +34,27 @@ export const useRoom = (): UseCreateRoomReturn => {
         }
     };
 
-    return { handleCreateRoom, isCreating };
+    const handleJoinRoom = async (roomID: string) => {
+        if (!roomID.length) return toast.error("Enter Room ID to proceed!");
+        setIsJoining(true);
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/join-room?roomID=${roomID}`, { method: 'GET' });
+            const data = await response.json();
+
+            if (data.success) {
+                setRoomType("Join");
+                router.push(`/room/${roomID}`, { shallow: true } as any);
+            } else {
+                setIsJoining(false);
+                toast.error('No room found');
+            }
+        } catch (error) {
+            setIsJoining(false);
+            console.error('Error joining room:', error);
+            toast.error('Failed to join room');
+        }
+    };
+
+    return { handleCreateRoom, isCreating, handleJoinRoom, isJoining };
 };

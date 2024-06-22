@@ -1,10 +1,8 @@
-"use client"
-
 import React, { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import useWindowSize from '@/utils/useWindowSize';
 import { useDraw } from '@/hooks/useDraw';
-import { useInviteStore, useSidebarStore, useToolbarStore } from '@/store';
+import { useSidebarStore, useToolbarStore } from '@/store';
 import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
@@ -17,7 +15,7 @@ const RoomCanvas: React.FC = () => {
 
     const { width, height } = useWindowSize();
     const { brushThickness, color } = useToolbarStore();
-    const { setPlayers, addPlayer, removePlayer, setAssignedPlayerName } = useSidebarStore();
+    const { players, setPlayers, addPlayer, removePlayer, setAssignedPlayerName } = useSidebarStore();
 
     const socketRef = useRef(connectSocket());
     const setupCompleted = useRef(false);
@@ -40,11 +38,12 @@ const RoomCanvas: React.FC = () => {
         if (!joinedRoomRef.current) {
             if (typeof window !== 'undefined' && localStorage.getItem('playerName')) {
                 socketRef.current.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
-            }
 
-            socketRef.current.on('assign-player-name', (assignedName: string) => {
-                setAssignedPlayerName(assignedName);
-            });
+                socketRef.current.on('assign-player-name', (assignedName: string) => {
+                    setAssignedPlayerName(assignedName);
+                    localStorage.setItem('playerName', assignedName);
+                });
+            }
 
             joinedRoomRef.current = true;
         }
@@ -102,7 +101,6 @@ const RoomCanvas: React.FC = () => {
             setupCompleted.current = false;
         };
     }, []);
-    // }, [addPlayer, clear, canvasRef, removePlayer, roomID, playerName, setPlayers, setAssignedPlayerName]);
 
     useEffect(() => {
         const cleanup = setupSocketListeners();
@@ -110,6 +108,8 @@ const RoomCanvas: React.FC = () => {
             cleanup();
         };
     }, [setupSocketListeners]);
+
+    console.log(players);
 
     return (
         <div className='relative'>

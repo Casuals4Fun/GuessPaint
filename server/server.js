@@ -20,50 +20,47 @@ const corsOptions = {
     origin: '*',
     credentials: true,
     optionSuccessStatus: 200,
-}
+};
 app.use(cors(corsOptions));
+
 const io = new Server(server, {
-    cors: corsOptions
+    cors: corsOptions,
 });
 
-let socketRoom = {};
+let rooms = {};
 let roomPlayers = {};
-let socketPlayerNames = {};
+let allPlayers = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
-        const uniquePlayerName = `${playerName}#${Date.now()}`;
-    
         socket.join(roomID);
-        socketRoom[socket.id] = roomID;
-        socketPlayerNames[socket.id] = uniquePlayerName;
-    
-        if (!roomPlayers[roomID]) {
-            roomPlayers[roomID] = [];
-        }
-        roomPlayers[roomID].push(uniquePlayerName);
-    
-        socket.emit('assign-player-name', uniquePlayerName);
-        socket.broadcast.to(roomID).emit('new-player', uniquePlayerName);
+        rooms[socket.id] = roomID;
+        allPlayers[socket.id] = playerName;
+
+        if (!roomPlayers[roomID]) roomPlayers[roomID] = [];
+        roomPlayers[roomID].push(playerName);
+
+        socket.emit('assign-player-name', playerName);
+        socket.broadcast.to(roomID).emit('new-player', playerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
-    });    
+    });
 
     socket.on('client-ready', () => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             socket.broadcast.to(roomID).emit('get-canvas-state');
         }
     });
 
     socket.on('canvas-state', (state) => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             socket.broadcast.to(roomID).emit('canvas-state-from-server', state);
         }
     });
 
     socket.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }) => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             io.to(roomID).emit('draw-line', {
                 prevPoint, currPoint, color, brushThickness
@@ -72,15 +69,15 @@ io.on('connection', socket => {
     });
 
     socket.on('clear', () => {
-        const roomID = socketRoom[socket.id];
+        const roomID = rooms[socket.id];
         if (roomID) {
             io.to(roomID).emit('clear');
         }
     });
 
     socket.on('disconnect', () => {
-        const roomID = socketRoom[socket.id];
-        const playerName = socketPlayerNames[socket.id];
+        const roomID = rooms[socket.id];
+        const playerName = allPlayers[socket.id];
 
         if (roomID && roomPlayers[roomID]) {
             const index = roomPlayers[roomID].indexOf(playerName);
@@ -93,8 +90,8 @@ io.on('connection', socket => {
             }
         }
 
-        delete socketRoom[socket.id];
-        delete socketPlayerNames[socket.id];
+        delete rooms[socket.id];
+        delete allPlayers[socket.id];
 
         if (roomID) {
             io.to(roomID).emit('player-left', playerName);
@@ -105,11 +102,8 @@ io.on('connection', socket => {
 app.get('/', async (req, res, next) => {
     try {
         res.send({
-            status: 201,
-            message: "GuessPaint API running!",
-            socketRoom,
-            roomPlayers,
-            socketPlayerNames
+            status: 201, message: "GuessPaint API running!",
+            rooms, roomPlayers, allPlayers
         });
     } catch (error) {
         res.send({ message: error });
@@ -117,8 +111,26 @@ app.get('/', async (req, res, next) => {
 });
 
 app.get('/create-room', (req, res) => {
-    const roomID = generateUniqueRoomCode(socketRoom);
+    const roomID = generateUniqueRoomCode(rooms);
     res.json({ roomID });
+});
+
+app.get('/join-room', (req, res) => {
+    const { roomID } = req.query;
+
+    if (roomPlayers[roomID]) {
+        res.json({ success: true, roomID });
+    } else {
+        res.json({ success: false });
+    }
+});
+
+app.get('/list-rooms', (req, res) => {
+    const rooms = Object.keys(roomPlayers).map(roomID => ({
+        roomID,
+        playerCount: roomPlayers[roomID].length
+    }));
+    res.json(rooms);
 });
 
 const PORT = process.env.PORT || 5000;
