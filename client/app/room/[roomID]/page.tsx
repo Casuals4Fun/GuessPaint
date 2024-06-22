@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
+import usePlayerName from '@/hooks/usePlayerName';
 import { useInviteStore } from '@/store';
 import RoomCanvas from '@/components/RoomCanvas';
 import Invite from '@/components/Invite';
@@ -12,16 +13,14 @@ const InviteRoom = () => {
     const params = useParams();
     const roomID = params!.roomID;
 
-    const { playerName, roomType, setRoomID, setPreference, invite, setInvite } = useInviteStore();
+    const { playerName, savePlayerName, loading } = usePlayerName();
+    const { roomType, setPreference, invite, setInvite } = useInviteStore();
 
     useEffect(() => {
         if (roomID) {
-            setRoomID(roomID);
             setPreference("Share");
         }
-    }, [roomID, setRoomID, setPreference]);
 
-    useEffect(() => {
         if (roomType === "Create") {
             toast.success("Room created!");
             setInvite(true);
@@ -30,16 +29,16 @@ const InviteRoom = () => {
             toast.success("Room joined!");
             setInvite(false);
         }
-    }, [roomType, setInvite]);
+    }, []);
+    // }, [roomID, roomType, setPreference, setInvite]);
 
-    return (
-        !playerName ? <PlayerName /> : (
-            <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
-                <RoomCanvas />
-                {invite && <Invite />}
-            </div>
-        )
+    if (loading) return null;
+    return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : (
+        <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
+            {roomID && <RoomCanvas />}
+            {invite && <Invite />}
+        </div>
     )
 };
 
-export default InviteRoom
+export default React.memo(InviteRoom);

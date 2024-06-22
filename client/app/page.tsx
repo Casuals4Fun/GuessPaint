@@ -1,13 +1,14 @@
 "use client"
 
-import { useInviteStore } from '@/store';
+import usePlayerName from '@/hooks/usePlayerName';
 import PlayerName from '@/components/PlayerName';
 import Invite from '@/components/Invite';
 
 const Home = () => {
-  const { playerName } = useInviteStore();
+  const { playerName, savePlayerName, loading } = usePlayerName();
 
-  return !playerName ? <PlayerName /> : <Invite />
+  if (loading) return null;
+  return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : <Invite />;
 };
 
 export default Home

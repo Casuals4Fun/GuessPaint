@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useInviteStore } from '@/store';
 import { useRoom } from '@/hooks/useRoom';
 import { IoIosArrowBack } from 'react-icons/io';
@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 import { BarLoader } from 'react-spinners';
 
 const Invite = () => {
-    const { invite, setInvite, preference, setPreference, roomID } = useInviteStore();
+    const params = useParams();
+    const roomID = params.roomID;
+    const { invite, setInvite, preference, setPreference } = useInviteStore();
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-30">
@@ -87,18 +89,17 @@ const PreferenceSelector = () => {
 };
 
 const JoinRoom = () => {
-    const router = useRouter()
-    const { setRoomType, setRoomID } = useInviteStore();
-    const [roomId, setRoomId] = useState("");
+    const router = useRouter();
+    const { setRoomType } = useInviteStore();
+    const [roomID, setRoomID] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleJoinRoom = () => {
-        if (!roomId.length) return toast.error("Enter Room ID to proceed!");
+        if (!roomID.length) return toast.error("Enter Room ID to proceed!");
         setLoading(true);
 
         setRoomType("Join");
-        setRoomID(roomId);
-        router.push(`/room/${roomId}`, { shallow: true } as any);
+        router.push(`/room/${roomID}`, { shallow: true } as any);
     };
 
     return (
@@ -113,8 +114,8 @@ const JoinRoom = () => {
                 <div className='w-[60%]'>
                     <input
                         className='w-full outline-none border rounded-md py-2 px-1 md:px-4 text-center'
-                        value={roomId}
-                        onChange={e => setRoomId(e.target.value)}
+                        value={roomID}
+                        onChange={e => setRoomID(e.target.value)}
                         placeholder='Enter Room ID'
                     />
                 </div>
@@ -138,8 +139,10 @@ const JoinRoom = () => {
 };
 
 const ShareRoom = () => {
+    const params = useParams();
+    const roomID = params.roomID;
     const { handleCreateRoom, isCreating } = useRoom();
-    const { setPreference, roomID } = useInviteStore();
+    const { setPreference } = useInviteStore();
 
     const [hasCopied, setHasCopied] = useState<boolean>(false);
     const copyToClipboard = async () => {
@@ -159,47 +162,43 @@ const ShareRoom = () => {
 
     return (
         <div className='h-full flex flex-col gap-5 justify-between'>
-            <p className='text-[20px] text-center'>
-                Share Invite
-            </p>
-            <div className='w-full flex items-center justify-center'>
-                <Image
-                    width={150}
-                    height={150}
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`}
-                    className='w-[125px] h-[125px] md:w-[150px] md:h-[150px] object-contain border-2'
-                    alt="Share QR"
-                />
-            </div>
-            <div className='w-full min-h-[42px] flex border border-gray-300 rounded-md pl-2 overflow-hidden'>
-                <div className='w-[90%] min-h-full text-ellipsis overflow-hidden border-r border-gray-300 py-2'>
-                    {`${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`}
-                </div>
-                <button
-                    title={`${hasCopied ? "Copied" : "Copy URL"}`}
-                    className={`w-[10%] min-h-full flex items-center justify-center py-2 cursor-pointer ${hasCopied ? "bg-gray-200 text-black" : "bg-black text-white"} duration-200`}
-                    onClick={copyToClipboard}
-                >
-                    {hasCopied ? <BsFillClipboardCheckFill size={20} /> : <BsFillClipboardFill size={20} />}
-                </button>
-            </div>
-            <div className='w-full h-[1px] bg-gray-200' />
             {roomID ? (
-                <div className='flex justify-between items-center'>
-                    <button className='hover:underline text-[14px]' onClick={handleCreateRoom} disabled={isCreating}>
-                        Create new Room
-                    </button>
-                    <button className='hover:underline text-[14px]' onClick={() => setPreference("Join")}>
-                        Join new Room
-                    </button>
-                </div>
-            ) : (
-                <div className='flex justify-end items-center'>
-                    <button className='hover:underline text-[14px]' onClick={() => setPreference("Join")}>
-                        Join Room
-                    </button>
-                </div>
-            )}
+                <>
+                    <p className='text-[20px] text-center'>
+                        Share Invite
+                    </p>
+                    <div className='w-full flex items-center justify-center'>
+                        <Image
+                            width={150}
+                            height={150}
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`}
+                            className='w-[125px] h-[125px] md:w-[150px] md:h-[150px] object-contain border-2'
+                            alt="Share QR"
+                        />
+                    </div>
+                    <div className='w-full min-h-[42px] flex border border-gray-300 rounded-md pl-2 overflow-hidden'>
+                        <div className='w-[90%] min-h-full text-ellipsis overflow-hidden border-r border-gray-300 py-2'>
+                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`}
+                        </div>
+                        <button
+                            title={`${hasCopied ? "Copied" : "Copy URL"}`}
+                            className={`w-[10%] min-h-full flex items-center justify-center py-2 cursor-pointer ${hasCopied ? "bg-gray-200 text-black" : "bg-black text-white"} duration-200`}
+                            onClick={copyToClipboard}
+                        >
+                            {hasCopied ? <BsFillClipboardCheckFill size={20} /> : <BsFillClipboardFill size={20} />}
+                        </button>
+                    </div>
+                    <div className='w-full h-[1px] bg-gray-200' />
+                    <div className='flex justify-between items-center'>
+                        <button className='hover:underline text-[14px]' onClick={handleCreateRoom} disabled={isCreating}>
+                            Create new Room
+                        </button>
+                        <button className='hover:underline text-[14px]' onClick={() => setPreference("Join")}>
+                            Join new Room
+                        </button>
+                    </div>
+                </>
+            ) : <PreferenceSelector />}
         </div>
     )
 };

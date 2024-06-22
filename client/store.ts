@@ -13,20 +13,24 @@ export const useToolbarStore = create<ToolbarState>((set) => ({
     setOpenCanvasBg: (openCanvasBg: boolean) => set({ openCanvasBg: openCanvasBg })
 }));
 
-export const useSocketStore = create<SocketState>((set) => ({
-    connected: false,
-    setConnected: (connected: boolean) => set({ connected: connected })
-}));
+// export const useSocketStore = create<SocketState>((set) => ({ }));
 
 export const useInviteStore = create<InviteState>((set) => ({
-    playerName: "",
-    setPlayerName: (name: string) => set({ playerName: name }),
     roomType: "",
     setRoomType: (roomType: string) => set({ roomType: roomType }),
     invite: false,
     setInvite: (invite: boolean) => set({ invite: invite }),
     preference: "",
-    setPreference: (preference: string) => set({ preference: preference }),
-    roomID: "",
-    setRoomID: (roomID: string) => set({ roomID: roomID })
+    setPreference: (preference: string) => set({ preference: preference })
+}));
+
+export const useSidebarStore = create<SidebarState>((set) => ({
+    players: [],
+    setPlayers: (players: string[]) => set({ players }),
+    addPlayer: (player: string) => set((state) => ({ players: [...state.players, player] })),
+    removePlayer: (player: string) => set((state) => ({
+        players: state.players.filter(p => p !== player)
+    })),
+    assignedPlayerName: '',
+    setAssignedPlayerName: (playerName: string) => set({ assignedPlayerName: playerName }),
 }));
