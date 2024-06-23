@@ -60,9 +60,9 @@ const PreferenceSelector = () => {
     const { setPreference } = useInviteStore();
 
     return (
-        <div className='p-5 w-full flex flex-col gap-6 justify-between'>
+        <div className='p-5 w-full flex flex-col gap-4 justify-between'>
             <button
-                className={`bg-gray-100 max-w-[175px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
+                className={`bg-gray-100 sm:max-w-[175px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
                 disabled={isPlaying || isCreating}
                 onClick={handleRandomRoom}
             >
@@ -73,9 +73,9 @@ const PreferenceSelector = () => {
                     </>
                 )}
             </button>
-            <div className='h-full flex items-center justify-center gap-6 md:gap-20 flex-wrap'>
+            <div className='h-full flex items-center justify-center gap-4 flex-wrap'>
                 <button
-                    className={`bg-gray-100 max-w-[150px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
+                    className={`bg-gray-100 sm:max-w-[175px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
                     disabled={isPlaying || isCreating}
                     onClick={handleCreateRoom}
                 >
@@ -87,7 +87,7 @@ const PreferenceSelector = () => {
                     )}
                 </button>
                 <button
-                    className={`bg-gray-100 max-w-[150px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
+                    className={`bg-gray-100 sm:max-w-[175px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
                     disabled={isPlaying || isCreating}
                     onClick={() => setPreference("Join")}
                 >
@@ -155,7 +155,7 @@ const JoinRoom = () => {
     }, []);
 
     const handleJoinRoom = async (roomID: string, isInputJoin: boolean, roomIndex?: number) => {
-        if (!roomID.length) return toast.error("Enter Room ID to proceed!");
+        if (!roomID.length) return toast.warning("Enter Room ID to proceed");
 
         if (isInputJoin) {
             setIsInputJoining(true);
@@ -232,11 +232,11 @@ const JoinRoom = () => {
                 {isLoadingRooms ? <BarLoader height={4} width={50} className='mx-auto' /> : rooms.length === 0 ? "No rooms" : (
                     <ul className='flex-1 flex flex-col gap-2'>
                         {rooms.map((item, i) => (
-                            <li key={i} className={`p-2 min-h-10 bg-gray-100 flex items-center justify-center rounded-md ${item.isLoading ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-200'}`}>
+                            <li key={i} className={`p-2 min-h-10 bg-gray-100 flex items-center justify-center rounded-md ${item.isLoading || isInputJoining ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-200'}`}>
                                 {item.isLoading ? <BarLoader height={4} width={50} /> : (
                                     <button
                                         className='w-full flex items-center justify-between'
-                                        disabled={item.isLoading}
+                                        disabled={item.isLoading || isInputJoining}
                                         onClick={() => handleJoinRoom(item.roomID, false, i)}
                                     >
                                         <p>{item.roomID}</p>
@@ -265,7 +265,7 @@ const ShareRoom = () => {
             try {
                 await navigator.clipboard.writeText(url);
                 setHasCopied(true);
-                toast.success("Copied!");
+                toast.success("Copied");
             } catch (err) {
                 console.error('Failed to copy URL: ', err);
             }

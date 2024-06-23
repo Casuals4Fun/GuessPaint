@@ -9,7 +9,7 @@ const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
     const [name, setName] = useState('');
 
     const handlePlayerName = () => {
-        if (!name.trim()) return toast.warning("Enter your name to proceed!");
+        if (!name.trim()) return toast.warning("Enter your name to proceed");
         onSavePlayerName(name);
     };
 

@@ -20,11 +20,11 @@ const InviteRoom = () => {
         setPreference("Share");
 
         if (roomType === "Create") {
-            toast.success("Room created!");
+            toast.success("Room created");
             setInvite(true);
         }
         else {
-            toast.success("Room joined!");
+            toast.success("Room joined");
             setInvite(false);
         }
     }, []);

@@ -13,7 +13,7 @@ const Home = () => {
     <div className='h-[100dvh] flex items-end justify-center'>
       {!playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : <Invite />}
 
-      <DotLottieReact src="/Pencil.lottie" loop autoplay className='w-full h-[300px] sm:h-full' />
+      <DotLottieReact src="/Pencil.lottie" loop autoplay speed={0.5} className='w-full h-[300px] sm:h-full' />
     </div>
   )
 };
