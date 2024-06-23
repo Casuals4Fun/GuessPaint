@@ -8,7 +8,7 @@ interface UseCreateRoomReturn {
     isPlaying: boolean;
     handleCreateRoom: () => Promise<void>;
     isCreating: boolean;
-    handleJoinRoom: (roomID: string) => Promise<string | number>;
+    handleJoinRoom: (roomID: string) => Promise<string | number | undefined>;
     isJoining: boolean;
 }
 

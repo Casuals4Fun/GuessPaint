@@ -5,7 +5,7 @@ import PlayerName from '@/components/PlayerName';
 import Invite from '@/components/Invite';
 
 const Home = () => {
-  const { playerName, savePlayerName, loading } = usePlayerName();
+  const { loading, playerName, savePlayerName } = usePlayerName();
 
   if (loading) return null;
   return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : <Invite />;
