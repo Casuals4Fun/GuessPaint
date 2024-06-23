@@ -96,14 +96,21 @@ const PreferenceSelector = () => {
     )
 };
 
+interface Room {
+    roomID: string;
+    playerCount: number;
+}
+
+
 const JoinRoom = () => {
     const { setInvite } = useInviteStore();
     const { handleJoinRoom, isJoining } = useRoom();
     const [isLoadingRooms, setIsLoadingRooms] = useState(false);
-    const [rooms, setRooms] = useState([]);
+
+    const [rooms, setRooms] = useState<Room[]>([]);
 
     const [roomID, setRoomID] = useState(Array(5).fill(''));
-    const inputRefs = useRef([]);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const value = e.target.value.toUpperCase();
@@ -113,14 +120,14 @@ const JoinRoom = () => {
             setRoomID(newRoomID);
 
             if (value !== '' && index < 4) {
-                inputRefs.current[index + 1].focus();
+                inputRefs.current[index + 1]?.focus();
             }
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
         if (e.key === 'Backspace' && roomID[index] === '' && index > 0) {
-            inputRefs.current[index - 1].focus();
+            inputRefs.current[index - 1]?.focus();
         }
     };
 
@@ -153,7 +160,7 @@ const JoinRoom = () => {
                     {roomID.map((digit, index) => (
                         <input
                             key={index}
-                            ref={el => inputRefs.current[index] = el}
+                            ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
                             className='w-10 h-10 border border-gray-300 rounded text-center outline-none'
                             value={digit}
                             onChange={(e) => handleChange(e, index)}

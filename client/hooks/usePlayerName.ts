@@ -20,9 +20,9 @@ const usePlayerName = () => {
     };
 
     return {
+        loading,
         playerName,
-        savePlayerName,
-        loading
+        savePlayerName
     };
 };
 
