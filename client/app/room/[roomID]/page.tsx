@@ -11,23 +11,21 @@ import PlayerName from '@/components/PlayerName';
 
 const InviteRoom = () => {
     const params = useParams();
-    const roomID = params!.roomID;
+    const roomID = params.roomID as string;
 
     const { playerName, savePlayerName, loading } = usePlayerName();
     const { roomType, setPreference, invite, setInvite } = useInviteStore();
 
     useEffect(() => {
-        if (roomID) {
-            setPreference("Share");
+        setPreference("Share");
 
-            if (roomType === "Create") {
-                toast.success("Room created!");
-                setInvite(true);
-            }
-            else if (roomType === "Join") {
-                toast.success("Room joined!");
-                setInvite(false);
-            }
+        if (roomType === "Create") {
+            toast.success("Room created");
+            setInvite(true);
+        }
+        else {
+            toast.success("Room joined");
+            setInvite(false);
         }
     }, []);
 

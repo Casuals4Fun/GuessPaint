@@ -112,6 +112,7 @@ const RoomCanvas: React.FC = () => {
                     clear();
                     socketRef.current.emit('clear');
                 }}
+                exit={() => socketRef.current.disconnect()}
             />
 
             <canvas
