@@ -5,12 +5,15 @@ import { useInviteStore, useToolbarStore } from '@/store';
 import { HexColorPicker } from 'react-colorful';
 import { AiOutlineClose } from 'react-icons/ai';
 import { PiEraserFill, PiPaintBrushFill, PiPencil, PiShareNetworkFill } from 'react-icons/pi';
+import { RxExit } from "react-icons/rx";
+import Link from 'next/link';
 
 interface ToolbarProps {
     clear: () => void
+    exit: () => void
 };
 
-const RoomToolbar = ({ clear }: ToolbarProps) => {
+const RoomToolbar = ({ clear, exit }: ToolbarProps) => {
     const { setInvite } = useInviteStore();
     const {
         colorPicker, setColorPicker,
@@ -95,6 +98,9 @@ const RoomToolbar = ({ clear }: ToolbarProps) => {
                     >
                         <PiShareNetworkFill size={22} />
                     </button>
+                    <Link href='/' onClick={exit} className='size-[38px] grid place-items-center bg-white active:scale-[0.8] duration-200 rounded-full'>
+                        <RxExit size={20} />
+                    </Link>
                 </div>
             </div>
         </div>

@@ -2,18 +2,17 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useInviteStore } from '@/store';
 import { useRoom } from '@/hooks/useRoom';
+import { toast } from 'sonner';
+import { BarLoader } from 'react-spinners';
 import { IoIosArrowBack } from 'react-icons/io';
 import { AiOutlineClose } from 'react-icons/ai';
 import { FaPlay } from "react-icons/fa";
 import { GrAdd } from 'react-icons/gr';
 import { GoPeople } from 'react-icons/go';
 import { BsFillClipboardCheckFill, BsFillClipboardFill } from 'react-icons/bs';
-import { toast } from 'sonner';
-import { BarLoader } from 'react-spinners';
 
 const Invite = () => {
     const params = useParams();
@@ -23,7 +22,15 @@ const Invite = () => {
     return (
         <div className="fixed inset-0 flex items-center justify-center z-30">
             <div className="bg-black opacity-70 fixed inset-0 z-20"></div>
-            <div className={`bg-white w-[95%] md:w-[500px] ${preference === "Join" ? "h-[500px]" : preference !== "" && preference !== "Share" ? "h-[214px]" : "min-h-[214px]"} grid place-items-center mx-auto rounded-lg shadow-lg overflow-hidden z-30 relative`}>
+            <div className='bg-white w-[95%] md:w-[500px] grid place-items-center mx-auto rounded-lg shadow-lg overflow-hidden z-30 relative'>
+                {preference === "" ? (
+                    <PreferenceSelector />
+                ) : preference === "Join" ? (
+                    <JoinRoom />
+                ) : preference === "Share" ? (
+                    <ShareRoom />
+                ) : null}
+
                 {(preference !== "Share" && preference !== "") && (
                     <button
                         className='absolute left-0 top-0 w-[30px] h-[30px] bg-gray-100 hover:bg-black text-black hover:text-white duration-200 flex items-center justify-center'
@@ -43,15 +50,6 @@ const Invite = () => {
                         <AiOutlineClose />
                     </button>
                 )}
-                <div className="w-full h-full p-5">
-                    {preference === "" ? (
-                        <PreferenceSelector />
-                    ) : preference === "Join" ? (
-                        <JoinRoom />
-                    ) : preference === "Share" ? (
-                        <ShareRoom />
-                    ) : null}
-                </div>
             </div>
         </div>
     )
@@ -62,53 +60,57 @@ const PreferenceSelector = () => {
     const { setPreference } = useInviteStore();
 
     return (
-        <div className='h-full flex flex-col gap-6 justify-between'>
-            <button className='w-fit mx-auto flex flex-col items-center gap-1' onClick={handleRandomRoom} disabled={isPlaying}>
-                <div className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'>
-                    {isPlaying ? <BarLoader height={4} width={50} /> : <FaPlay size={30} className='ml-1.5 mt-1' />}
-                </div>
-                <div className='cursor-pointer'>
-                    Play
-                </div>
+        <div className='p-5 w-full flex flex-col gap-6 justify-between'>
+            <button
+                className={`bg-gray-100 max-w-[175px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
+                disabled={isPlaying || isCreating}
+                onClick={handleRandomRoom}
+            >
+                {isPlaying ? <BarLoader height={4} width={50} /> : (
+                    <>
+                        <p>Play</p>
+                        <FaPlay size={15} />
+                    </>
+                )}
             </button>
             <div className='h-full flex items-center justify-center gap-6 md:gap-20 flex-wrap'>
-                <button className='flex flex-col items-center gap-1' onClick={handleCreateRoom} disabled={isCreating}>
-                    <div className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'>
-                        {isCreating ? <BarLoader height={4} width={50} /> : <GrAdd size={30} />}
-                    </div>
-                    <div className='cursor-pointer'>
-                        Create Room
-                    </div>
+                <button
+                    className={`bg-gray-100 max-w-[150px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
+                    disabled={isPlaying || isCreating}
+                    onClick={handleCreateRoom}
+                >
+                    {isCreating ? <BarLoader height={4} width={50} /> : (
+                        <>
+                            <p>Create Room</p>
+                            <GrAdd size={15} />
+                        </>
+                    )}
                 </button>
-                <div className='flex flex-col items-center gap-1'>
-                    <div
-                        className='w-[95px] h-[95px] bg-gray-100 rounded-full hover:border cursor-pointer flex items-center justify-center'
-                        onClick={() => setPreference("Join")}
-                    >
-                        <GoPeople size={30} />
-                    </div>
-                    <div className='cursor-pointer' onClick={() => setPreference("Join")}>
-                        Join Room
-                    </div>
-                </div>
+                <button
+                    className={`bg-gray-100 max-w-[150px] w-full h-[56px] mx-auto flex items-center justify-center gap-2 rounded-md ${isPlaying || isCreating ? 'cursor-not-allowed' : 'hover:border'}`}
+                    disabled={isPlaying || isCreating}
+                    onClick={() => setPreference("Join")}
+                >
+                    <p>Join Room</p>
+                    <GoPeople size={15} />
+                </button>
             </div>
         </div>
     )
 };
 
-interface Room {
-    roomID: string;
-    playerCount: number;
-}
-
-
 const JoinRoom = () => {
+    type Room = {
+        roomID: string;
+        playerCount: number;
+        isLoading: boolean;
+    };
+
+    const router = useRouter();
     const { setInvite } = useInviteStore();
-    const { handleJoinRoom, isJoining } = useRoom();
     const [isLoadingRooms, setIsLoadingRooms] = useState(false);
-
+    const [isInputJoining, setIsInputJoining] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
-
     const [roomID, setRoomID] = useState(Array(5).fill(''));
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -134,11 +136,14 @@ const JoinRoom = () => {
     useEffect(() => {
         const getAllRooms = async () => {
             setIsLoadingRooms(true);
-
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/list-rooms`, { method: 'GET' });
-                const rooms = await response.json();
-                setRooms(rooms);
+                const roomsData = await response.json();
+                const roomsWithLoading: Room[] = roomsData.map((room: { roomID: string, playerCount: number }) => ({
+                    ...room,
+                    isLoading: false,
+                }));
+                setRooms(roomsWithLoading);
             } catch (error) {
                 console.error('Error fetching rooms:', error);
                 toast.error('Failed to fetch rooms');
@@ -149,8 +154,49 @@ const JoinRoom = () => {
         getAllRooms();
     }, []);
 
+    const handleJoinRoom = async (roomID: string, isInputJoin: boolean, roomIndex?: number) => {
+        if (!roomID.length) return toast.error("Enter Room ID to proceed!");
+
+        if (isInputJoin) {
+            setIsInputJoining(true);
+        } else if (roomIndex !== undefined) {
+            const newRooms = [...rooms];
+            newRooms[roomIndex].isLoading = true;
+            setRooms(newRooms);
+        }
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/join-room?roomID=${roomID}`, { method: 'GET' });
+            const data = await response.json();
+
+            if (data.success) {
+                setInvite(false);
+                router.push(`/room/${roomID}`, { shallow: true } as any);
+            } else {
+                toast.error('No room found');
+                if (isInputJoin) {
+                    setIsInputJoining(false);
+                } else if (roomIndex !== undefined) {
+                    const newRooms = [...rooms];
+                    newRooms[roomIndex].isLoading = false;
+                    setRooms(newRooms);
+                }
+            }
+        } catch (error) {
+            console.error('Error joining room:', error);
+            toast.error('Failed to join room');
+            if (isInputJoin) {
+                setIsInputJoining(false);
+            } else if (roomIndex !== undefined) {
+                const newRooms = [...rooms];
+                newRooms[roomIndex].isLoading = false;
+                setRooms(newRooms);
+            }
+        }
+    };
+
     return (
-        <div className='h-full flex flex-col overflow-hidden'>
+        <div className='p-5 w-full min-h-[400px] flex flex-col overflow-hidden'>
             <p className='text-[20px] text-center mb-3'>
                 Join Room
             </p>
@@ -172,15 +218,10 @@ const JoinRoom = () => {
             </div>
             <div className='flex justify-end items-center mt-3'>
                 <button
-                    className={`${isJoining ? "bg-white" : "bg-black hover:bg-white text-white hover:text-black duration-200"} w-[80px] h-[40px] py-2 px-4 rounded-lg`}
-                    onClick={() => handleJoinRoom(roomID.join('').toUpperCase().trim())}
+                    className={`${isInputJoining ? "bg-white cursor-not-allowed" : "bg-black hover:bg-white text-white hover:text-black duration-200"} w-[80px] h-[40px] py-2 px-4 rounded-lg`}
+                    onClick={() => handleJoinRoom(roomID.join(''), true)}
                 >
-                    {isJoining ? (
-                        <BarLoader
-                            height={4}
-                            width={50}
-                        />
-                    ) : "Join"}
+                    {isInputJoining ? <BarLoader height={4} width={50} /> : "Join"}
                 </button>
             </div>
             <div className='w-full h-[1px] bg-gray-200 my-3' />
@@ -188,14 +229,20 @@ const JoinRoom = () => {
                 <p className='text-[20px] text-center mb-3'>
                     Available Rooms
                 </p>
-                {isLoadingRooms ? <BarLoader height={4} width={50} className='mx-auto' /> : rooms.length == 0 ? "No rooms" : (
+                {isLoadingRooms ? <BarLoader height={4} width={50} className='mx-auto' /> : rooms.length === 0 ? "No rooms" : (
                     <ul className='flex-1 flex flex-col gap-2'>
                         {rooms.map((item, i) => (
-                            <li key={i} className='p-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer'>
-                                <Link href={`/room/${item.roomID}`} className='flex justify-between' onClick={() => setInvite(false)}>
-                                    <p>{item.roomID}</p>
-                                    <p>{item.playerCount === 0 ? "No players" : <>{item.playerCount} {item.playerCount === 1 ? "player" : "players"}</>}</p>
-                                </Link>
+                            <li key={i} className={`p-2 min-h-10 bg-gray-100 flex items-center justify-center rounded-md ${item.isLoading ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-200'}`}>
+                                {item.isLoading ? <BarLoader height={4} width={50} /> : (
+                                    <button
+                                        className='w-full flex items-center justify-between'
+                                        disabled={item.isLoading}
+                                        onClick={() => handleJoinRoom(item.roomID, false, i)}
+                                    >
+                                        <p>{item.roomID}</p>
+                                        <p>{item.playerCount === 0 ? "No players" : <>{item.playerCount} {item.playerCount === 1 ? "player" : "players"}</>}</p>
+                                    </button>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -208,7 +255,7 @@ const JoinRoom = () => {
 const ShareRoom = () => {
     const params = useParams();
     const roomID = params.roomID as string;
-    const { handleRandomRoom, isPlaying, handleCreateRoom, isCreating } = useRoom();
+    const { handleCreateRoom, isCreating } = useRoom();
     const { setPreference } = useInviteStore();
 
     const [hasCopied, setHasCopied] = useState<boolean>(false);
@@ -228,7 +275,7 @@ const ShareRoom = () => {
     };
 
     return (
-        <div className='h-full flex flex-col gap-5 justify-between'>
+        <div className='p-5 w-full flex flex-col gap-5 justify-between'>
             {roomID ? (
                 <>
                     <p className='text-[20px] text-center'>
@@ -248,7 +295,7 @@ const ShareRoom = () => {
                             className='absolute z-0'
                         />
                     </div>
-                    <div className="flex space-x-2 mx-auto">
+                    <div className="flex flex-wrap gap-2 mx-auto">
                         {roomID.split('').map((digit, index) => (
                             <div key={index} className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded font-semibold">
                                 {digit}
@@ -268,14 +315,11 @@ const ShareRoom = () => {
                         </button>
                     </div>
                     <div className='w-full h-[1px] bg-gray-200' />
-                    <div className='flex flex-wrap gap-[10px] sm:gap-0 justify-center text-md'>
-                        <button className='bg-gray-100 px-3 py-2 w-fit sm:mx-auto hover:bg-gray-200 rounded' onClick={handleRandomRoom} disabled={isPlaying}>
-                            Join Random
-                        </button>
-                        <button className='bg-gray-100 px-3 py-2 w-fit sm:mx-auto hover:bg-gray-200 rounded' onClick={handleCreateRoom} disabled={isCreating}>
+                    <div className='w-full flex flex-wrap gap-[10px] sm:gap-0 justify-between text-md'>
+                        <button className='bg-gray-100 px-3 py-2 w-fit hover:bg-gray-200 rounded' onClick={handleCreateRoom} disabled={isCreating}>
                             Create Room
                         </button>
-                        <button className='bg-gray-100 px-3 py-2 w-fit sm:mx-auto hover:bg-gray-200 rounded' onClick={() => setPreference("Join")}>
+                        <button className='bg-gray-100 px-3 py-2 w-fit hover:bg-gray-200 rounded' onClick={() => setPreference("Join")}>
                             Join Room
                         </button>
                     </div>

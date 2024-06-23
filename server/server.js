@@ -160,7 +160,7 @@ app.get('/random-room', (req, res) => {
         res.json({ success: true, roomID: randomRoomID });
     } else {
         const newRoomID = generateUniqueRoomCode(rooms);
-        res.json({ success: true, roomID: newRoomID });
+        res.json({ success: false, roomID: newRoomID });
     }
 });
 

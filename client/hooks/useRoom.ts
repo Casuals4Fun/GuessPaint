@@ -30,8 +30,8 @@ export const useRoom = (): UseCreateRoomReturn => {
                 setRoomType("Join");
                 router.push(`/room/${data.roomID}`, { shallow: true } as any);
             } else {
-                setIsPlaying(false);
-                toast.error('No room found');
+                setRoomType("Create");
+                router.push(`/room/${data.roomID}`, { shallow: true } as any);
             }
         } catch (error) {
             setIsPlaying(false);

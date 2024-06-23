@@ -1,14 +1,21 @@
 "use client"
 
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import usePlayerName from '@/hooks/usePlayerName';
 import PlayerName from '@/components/PlayerName';
 import Invite from '@/components/Invite';
 
 const Room = () => {
-    const { playerName, savePlayerName, loading } = usePlayerName();
+    const { loading, playerName, savePlayerName } = usePlayerName();
 
     if (loading) return null;
-    return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : <Invite />;
+    return (
+        <div className='h-[100dvh] flex items-end justify-center'>
+            {!playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : <Invite />}
+
+            <DotLottieReact src="/Pencil.lottie" loop autoplay className='w-full h-[300px] sm:h-full' />
+        </div>
+    )
 }
 
 export default Room
