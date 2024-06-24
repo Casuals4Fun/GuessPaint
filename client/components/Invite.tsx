@@ -15,8 +15,8 @@ import { GoPeople } from 'react-icons/go';
 import { BsFillClipboardCheckFill, BsFillClipboardFill } from 'react-icons/bs';
 
 const Invite = () => {
-    const params = useParams();
-    const roomID = params.roomID as string;
+    const roomID = useParams().roomID as string;
+
     const { invite, setInvite, preference, setPreference } = useInviteStore();
 
     return (
@@ -253,8 +253,8 @@ const JoinRoom = () => {
 };
 
 const ShareRoom = () => {
-    const params = useParams();
-    const roomID = params.roomID as string;
+    const roomID = useParams().roomID as string;
+    
     const { handleCreateRoom, isCreating } = useRoom();
     const { setPreference } = useInviteStore();
 

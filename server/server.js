@@ -122,7 +122,10 @@ io.on('connection', socket => {
         }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('leave-room', () => leaveRoom());
+    socket.on('disconnect', () => leaveRoom());
+
+    const leaveRoom = () => {
         const roomID = rooms[socket.id];
         let playerName = null;
         if (roomID && roomPlayers[roomID]) {
@@ -142,7 +145,7 @@ io.on('connection', socket => {
         delete rooms[socket.id];
 
         if (roomID && playerName) io.to(roomID).emit('player-left', { playerName, players: roomPlayers[roomID] });
-    });
+    }
 });
 
 app.get('/', async (req, res, next) => {

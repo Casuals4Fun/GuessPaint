@@ -10,8 +10,7 @@ import Invite from '@/components/Invite';
 import PlayerName from '@/components/PlayerName';
 
 const InviteRoom = () => {
-    const params = useParams();
-    const roomID = params.roomID as string;
+    const roomID = useParams().roomID as string;
 
     const { playerName, savePlayerName, loading } = usePlayerName();
     const { roomType, setPreference, invite, setInvite } = useInviteStore();

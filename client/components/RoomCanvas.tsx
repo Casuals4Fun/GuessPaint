@@ -10,8 +10,7 @@ import RoomToolbar from './RoomToolbar';
 import RoomSidebar from './RoomSidebar';
 
 const RoomCanvas: React.FC = () => {
-    const params = useParams();
-    const roomID = params.roomID;
+    const roomID = useParams().roomID as string;
 
     const { width, height } = useWindowSize();
     const { brushThickness, color } = useToolbarStore();
@@ -104,13 +103,17 @@ const RoomCanvas: React.FC = () => {
         setupCompleted.current = true;
 
         cleanupFunction = () => {
-            socketRef.current.off('new-player');
+            socketRef.current.off('join-room');
+            socketRef.current.off('assign-player-name');
             socketRef.current.off('players-in-room');
+            socketRef.current.off('new-player');
             socketRef.current.off('player-left');
+            socketRef.current.off('client-ready')
             socketRef.current.off('get-canvas-state');
             socketRef.current.off('canvas-state-from-server');
             socketRef.current.off('draw-line');
             socketRef.current.off('clear');
+            socketRef.current.off('word-submitted');
             setupCompleted.current = false;
         };
 
@@ -125,7 +128,7 @@ const RoomCanvas: React.FC = () => {
                     clear();
                     socketRef.current.emit('clear');
                 }}
-                exit={() => socketRef.current.disconnect()}
+                exit={() => socketRef.current.emit('leave-room')}
             />
 
             <canvas
