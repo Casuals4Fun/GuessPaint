@@ -13,8 +13,6 @@ export const useToolbarStore = create<ToolbarState>((set) => ({
     setOpenCanvasBg: (openCanvasBg: boolean) => set({ openCanvasBg: openCanvasBg })
 }));
 
-// export const useSocketStore = create<SocketState>((set) => ({ }));
-
 export const useInviteStore = create<InviteState>((set) => ({
     roomType: "",
     setRoomType: (roomType: string) => set({ roomType: roomType }),
