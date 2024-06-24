@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import useWindowSize from '@/utils/useWindowSize';
@@ -20,13 +20,16 @@ const RoomCanvas: React.FC = () => {
     const socketRef = useRef(connectSocket());
     const setupCompleted = useRef(false);
     const joinedRoomRef = useRef(false);
+    const [canDraw, setCanDraw] = useState(false);
 
     const { canvasRef, onMouseDown, clear } = useDraw(createLine);
 
     function createLine({ prevPoint, currPoint, ctx }: Draw) {
-        socketRef.current.emit('draw-line', { prevPoint, currPoint, color, brushThickness });
-        drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
-    };
+        if (canDraw) {
+            socketRef.current.emit('draw-line', { prevPoint, currPoint, color, brushThickness });
+            drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
+        }
+    }
 
     useEffect(() => {
         let cleanupFunction = () => { };
@@ -64,8 +67,11 @@ const RoomCanvas: React.FC = () => {
             setPlayers(players);
             const originalPlayerName = playerName.split('#')[0];
             toast.error(`${originalPlayerName} left`);
+            if (players.length < 2) {
+                setCanDraw(false);
+                clear();
+            }
         });
-
 
         socketRef.current.emit('client-ready');
 
@@ -83,11 +89,17 @@ const RoomCanvas: React.FC = () => {
         });
 
         socketRef.current.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }: DrawLineProps) => {
-            if (!ctx) return;
-            drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
+            if (ctx) {
+                drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
+            }
         });
 
         socketRef.current.on('clear', clear);
+
+        socketRef.current.on('word-submitted', ({ playerName }) => {
+            const assignedName = localStorage.getItem('playerName');
+            setCanDraw(playerName === assignedName);
+        });
 
         setupCompleted.current = true;
 
@@ -108,6 +120,7 @@ const RoomCanvas: React.FC = () => {
     return (
         <div className='relative'>
             <RoomToolbar
+                canDraw={canDraw}
                 clear={() => {
                     clear();
                     socketRef.current.emit('clear');
@@ -123,14 +136,14 @@ const RoomCanvas: React.FC = () => {
                 onMouseDown={onMouseDown}
                 onTouchStart={onMouseDown}
                 style={{
-                    background: '#FFF',
                     cursor: "url(https://icons.iconarchive.com/icons/github/octicons/24/pencil-16-icon.png) 0 30, crosshair"
                 }}
+                className={`bg-white ${!canDraw ? '!cursor-not-allowed' : ''}`}
             />
 
             <RoomSidebar socketRef={socketRef} />
         </div>
     );
-}
+};
 
 export default React.memo(RoomCanvas);
