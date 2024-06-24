@@ -10,7 +10,8 @@ interface RoomSidebarProps {
 }
 
 const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
-    const roomID = useParams().roomID;
+    const roomID = useParams().roomID as string;
+
     const { width, height } = useWindowSize();
     const { players, assignedPlayerName, setPlayers } = useSidebarStore();
     const [tab, setTab] = useState(0);
