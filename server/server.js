@@ -30,6 +30,7 @@ const io = new Server(server, {
 let rooms = {};
 let roomPlayers = {};
 let drawingWords = {};
+let leaderboards = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
@@ -58,6 +59,11 @@ io.on('connection', socket => {
             roomPlayers[roomID].push(uniquePlayerName);
         }
 
+        if (!leaderboards[roomID]) leaderboards[roomID] = {};
+        if (!leaderboards[roomID][uniquePlayerName]) {
+            leaderboards[roomID][uniquePlayerName] = 0;
+        }
+
         socket.emit('assign-player-name', uniquePlayerName);
         socket.broadcast.to(roomID).emit('new-player', playerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
@@ -65,12 +71,25 @@ io.on('connection', socket => {
         if (roomPlayers[roomID].length >= 2) {
             io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][0]);
         }
+
+        io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
     });
 
     socket.on('submit-word', ({ roomID, playerName, word }) => {
         drawingWords[roomID] = word;
-
         io.to(roomID).emit('word-submitted', { playerName: playerName, word });
+    });
+
+    socket.on('guess-word', ({ roomID, playerName, guess }) => {
+        if (drawingWords[roomID] && drawingWords[roomID].toLowerCase() === guess.toLowerCase()) {
+            if (leaderboards[roomID] && leaderboards[roomID][playerName] !== undefined) {
+                leaderboards[roomID][playerName] += 1;
+                io.to(roomID).emit('correct-guess', { playerName });
+                io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
+            }
+        } else {
+            socket.emit('wrong-guess');
+        }
     });
 
     socket.on('client-ready', () => {
@@ -112,8 +131,11 @@ io.on('connection', socket => {
             if (playerName) {
                 const index = roomPlayers[roomID].indexOf(playerName);
                 if (index !== -1) roomPlayers[roomID].splice(index, 1);
-                if (roomPlayers[roomID.length < 2]) delete drawingWords[roomID];
+                if (roomPlayers[roomID].length < 2) delete drawingWords[roomID];
                 if (roomPlayers[roomID].length === 0) delete roomPlayers[roomID];
+
+                delete leaderboards[roomID][playerName];
+                io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
             }
         }
 
@@ -127,7 +149,7 @@ app.get('/', async (req, res, next) => {
     try {
         res.send({
             status: 201, message: "GuessPaint API running!",
-            rooms, roomPlayers, drawingWords
+            rooms, roomPlayers, drawingWords, leaderboards
         });
     } catch (error) {
         res.send({ message: error });
