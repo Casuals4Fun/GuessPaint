@@ -29,6 +29,7 @@ const io = new Server(server, {
 
 let rooms = {};
 let roomPlayers = {};
+let drawingWords = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
@@ -60,6 +61,16 @@ io.on('connection', socket => {
         socket.emit('assign-player-name', uniquePlayerName);
         socket.broadcast.to(roomID).emit('new-player', playerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
+
+        if (roomPlayers[roomID].length >= 2) {
+            io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][0]);
+        }
+    });
+
+    socket.on('submit-word', ({ roomID, playerName, word }) => {
+        drawingWords[roomID] = word;
+
+        io.to(roomID).emit('word-submitted', { playerName: playerName, word });
     });
 
     socket.on('client-ready', () => {
@@ -100,20 +111,15 @@ io.on('connection', socket => {
 
             if (playerName) {
                 const index = roomPlayers[roomID].indexOf(playerName);
-                if (index !== -1) {
-                    roomPlayers[roomID].splice(index, 1);
-                }
-                if (roomPlayers[roomID].length === 0) {
-                    delete roomPlayers[roomID];
-                }
+                if (index !== -1) roomPlayers[roomID].splice(index, 1);
+                if (roomPlayers[roomID.length < 2]) delete drawingWords[roomID];
+                if (roomPlayers[roomID].length === 0) delete roomPlayers[roomID];
             }
         }
 
         delete rooms[socket.id];
 
-        if (roomID && playerName) {
-            io.to(roomID).emit('player-left', { playerName, players: roomPlayers[roomID] });
-        }
+        if (roomID && playerName) io.to(roomID).emit('player-left', { playerName, players: roomPlayers[roomID] });
     });
 });
 
@@ -121,7 +127,7 @@ app.get('/', async (req, res, next) => {
     try {
         res.send({
             status: 201, message: "GuessPaint API running!",
-            rooms, roomPlayers
+            rooms, roomPlayers, drawingWords
         });
     } catch (error) {
         res.send({ message: error });
