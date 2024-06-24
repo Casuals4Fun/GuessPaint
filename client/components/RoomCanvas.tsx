@@ -57,16 +57,17 @@ const RoomCanvas: React.FC = () => {
         socketRef.current.on('new-player', (playerName: string) => {
             if (!players.includes(playerName)) {
                 addPlayer(playerName);
-                const originalPlayerName = playerName.split('#')[0];
-                toast.success(`${originalPlayerName} joined`);
+                toast.success(`${playerName.split('#')[0]} joined`);
             }
         });
 
         socketRef.current.on('player-left', ({ playerName, players }) => {
-            setPlayers(players);
-            const originalPlayerName = playerName.split('#')[0];
-            toast.error(`${originalPlayerName} left`);
-            if (players.length < 2) {
+            setPlayers(players || []);
+
+            if (playerName === localStorage.getItem('playerName')) toast.success("Room left");
+            else toast.error(`${playerName.split('#')[0]} left`);
+            
+            if (players && players.length < 2) {
                 setCanDraw(false);
                 clear();
             }
@@ -96,8 +97,7 @@ const RoomCanvas: React.FC = () => {
         socketRef.current.on('clear', clear);
 
         socketRef.current.on('word-submitted', ({ playerName }) => {
-            const assignedName = localStorage.getItem('playerName');
-            setCanDraw(playerName === assignedName);
+            setCanDraw(playerName === localStorage.getItem('playerName'));
         });
 
         setupCompleted.current = true;

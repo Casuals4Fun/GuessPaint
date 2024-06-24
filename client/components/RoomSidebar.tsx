@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import useWindowSize from "@/utils/useWindowSize";
 import { useSidebarStore } from "@/store";
@@ -13,16 +13,37 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const roomID = useParams().roomID as string;
 
     const { width, height } = useWindowSize();
-    const { players, assignedPlayerName, setPlayers } = useSidebarStore();
+    const { players, assignedPlayerName } = useSidebarStore();
     const [tab, setTab] = useState(0);
     const [word, setWord] = useState('');
     const [isWordEntryEnabled, setIsWordEntryEnabled] = useState(false);
-    const [guess, setGuess] = useState('');
+    const [guessLength, setGuessLength] = useState<number>(0);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
     const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
     const [isPrompted, setIsPrompted] = useState('');
     const [isDrawer, setIsDrawer] = useState('');
     const [isGuesser, setIsGuesser] = useState('');
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const value = e.target.value.toUpperCase();
+        if (/^[A-Z0-9]$/.test(value) || value === '') {
+            const newGuess = [...guess];
+            newGuess[index] = value;
+            setGuess(newGuess);
+
+            if (value !== '' && index < guessLength - 1) {
+                inputRefs.current[index + 1]?.focus();
+            }
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+        if (e.key === 'Backspace' && guess[index] === '' && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
 
     useEffect(() => {
         const socket = socketRef.current;
@@ -33,7 +54,9 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             setIsPrompted(playerName);
         });
 
-        socket?.on('word-submitted', ({ playerName }: { playerName: string }) => {
+        socket?.on('word-submitted', ({ playerName, wordLength }) => {
+            setGuessLength(wordLength);
+            setGuess(Array(wordLength).fill(''));
             const assignedName = localStorage.getItem('playerName');
             if (playerName === assignedName) {
                 setIsWordEntryEnabled(false);
@@ -53,8 +76,9 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         socket?.on('correct-guess', ({ playerName }: { playerName: string }) => {
             if (localStorage.getItem('playerName') === playerName) {
                 setIsGuessEntryEnabled(false);
-                toast.success(`You guessed the correct word!`);
+                toast.success('You guessed the correct word');
             }
+            else toast.success(`${playerName.split('#')[0]} guessed the correct word`);
             setLeaderboard((prevLeaderboard) => ({
                 ...prevLeaderboard,
                 [playerName]: (prevLeaderboard[playerName] || 0) + 1
@@ -85,14 +109,17 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     }, []);
 
     const handleSubmitWord = () => {
+        if (word.length < 1) return toast.warning('Enter the drawing subject');
         const playerName = localStorage.getItem('playerName');
         socketRef.current?.emit('submit-word', { roomID, playerName, word });
     };
 
     const handleSubmitGuess = () => {
+        if (guess.join('').length < guessLength) return toast.warning('Guess the drawing subject');
         const playerName = localStorage.getItem('playerName');
-        socketRef.current?.emit('guess-word', { roomID, playerName, guess });
-        setGuess('');
+        socketRef.current?.emit('guess-word', { roomID, playerName, guess: guess.join('') });
+        setGuess(Array(guessLength).fill(''));
+        inputRefs.current[0]?.focus();
     };
 
     return (
@@ -126,17 +153,23 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                             ) : isDrawer === localStorage.getItem('playerName') ? <p>You have submitted the word</p>
                                 : isGuesser === localStorage.getItem('playerName') ? <p>You have guessed the word</p> : (
                                     isGuessEntryEnabled ? (
-                                        <div className='w-full flex flex-wrap gap-2 items-center justify-between'>
-                                            <input
-                                                type="text"
-                                                value={guess}
-                                                onChange={(e) => setGuess(e.target.value)}
-                                                placeholder="Your guess..."
-                                                className="w-full outline-none border p-2 rounded"
-                                            />
+                                        <div className='w-full flex flex-col gap-2 justify-between'>
+                                            <div className='w-full flex flex-wrap gap-2 items-center'>
+                                                {guess.map((digit, index) => (
+                                                    <input
+                                                        key={index}
+                                                        ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
+                                                        className='w-10 h-10 border border-gray-400 rounded text-center outline-none'
+                                                        value={digit}
+                                                        onChange={(e) => handleChange(e, index)}
+                                                        onKeyDown={(e) => handleKeyDown(e, index)}
+                                                        maxLength={1}
+                                                    />
+                                                ))}
+                                            </div>
                                             <button
                                                 onClick={handleSubmitGuess}
-                                                className="bg-black text-white py-2 px-4 rounded hover:bg-transparent hover:text-black"
+                                                className="w-fit bg-black text-white py-2 px-4 rounded hover:bg-transparent hover:text-black"
                                             >
                                                 Submit Guess
                                             </button>

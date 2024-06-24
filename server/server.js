@@ -77,7 +77,7 @@ io.on('connection', socket => {
 
     socket.on('submit-word', ({ roomID, playerName, word }) => {
         drawingWords[roomID] = word;
-        io.to(roomID).emit('word-submitted', { playerName: playerName, word });
+        io.to(roomID).emit('word-submitted', { playerName: playerName, wordLength: word.length });
     });
 
     socket.on('guess-word', ({ roomID, playerName, guess }) => {
@@ -135,10 +135,13 @@ io.on('connection', socket => {
                 const index = roomPlayers[roomID].indexOf(playerName);
                 if (index !== -1) roomPlayers[roomID].splice(index, 1);
                 if (roomPlayers[roomID].length < 2) delete drawingWords[roomID];
-                if (roomPlayers[roomID].length === 0) delete roomPlayers[roomID];
-
-                delete leaderboards[roomID][playerName];
-                io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
+                if (roomPlayers[roomID].length === 0) {
+                    delete roomPlayers[roomID];
+                    delete leaderboards[roomID];
+                } else {
+                    delete leaderboards[roomID][playerName];
+                    io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
+                }
             }
         }
 
