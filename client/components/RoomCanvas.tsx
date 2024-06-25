@@ -94,7 +94,7 @@ const RoomCanvas: React.FC = () => {
 
         socketRef.current.on('clear', clear);
 
-        socketRef.current.on('word-submitted', ({ playerName }) => {
+        socketRef.current.on('word-submitted', ({ playerName, wordLength }) => {
             setCanDraw(playerName === localStorage.getItem('playerName'));
         });
 
@@ -102,6 +102,10 @@ const RoomCanvas: React.FC = () => {
             setCanDraw(false);
             clear();
             socketRef.current.emit('clear');
+        });
+
+        socketRef.current.on('time-up', () => {
+            setCanDraw(false);
         });
 
         setupCompleted.current = true;
@@ -119,11 +123,12 @@ const RoomCanvas: React.FC = () => {
             socketRef.current.off('clear');
             socketRef.current.off('word-submitted');
             socketRef.current.off('correct-guess');
+            socketRef.current.off('time-up');
             setupCompleted.current = false;
         };
 
         return cleanupFunction;
-    }, []);
+    }, [players]);
 
     return (
         <div className='relative'>
