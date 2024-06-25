@@ -25,6 +25,8 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const [isDrawer, setIsDrawer] = useState('');
     const [isGuesser, setIsGuesser] = useState('');
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
+    const [timeLeft, setTimeLeft] = useState(60);
+    const timerIntervalRef = useRef<number | NodeJS.Timeout>();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const value = e.target.value.toUpperCase();
@@ -63,7 +65,27 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     useEffect(() => {
         const socket = socketRef.current;
 
+        const startTimer = () => {
+            clearInterval(timerIntervalRef.current);
+            setTimeLeft(60);
+            timerIntervalRef.current = setInterval(() => {
+                setTimeLeft(prev => {
+                    if (prev === 1) {
+                        clearInterval(timerIntervalRef.current);
+                        return 60;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        };
+
+        const stopTimer = () => {
+            clearInterval(timerIntervalRef.current);
+            setTimeLeft(60);
+        };
+
         socket?.on('prompt-word-entry', (playerName: string) => {
+            if (players.length >= 2) startTimer();
             const currentPlayerName = localStorage.getItem('playerName');
             setIsWordEntryEnabled(currentPlayerName === playerName);
             setIsPrompted(playerName);
@@ -90,15 +112,12 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('correct-guess', ({ playerName, nextPlayer }: { playerName: string, nextPlayer: string }) => {
+            if (players.length >= 2) startTimer();
             if (localStorage.getItem('playerName') === playerName) {
                 setIsGuessEntryEnabled(false);
                 toast.success('You guessed the correct word');
             }
             else toast.success(`${playerName.split('#')[0]} guessed the correct word`);
-            setLeaderboard((prevLeaderboard) => ({
-                ...prevLeaderboard,
-                [playerName]: (prevLeaderboard[playerName] || 0) + 1
-            }));
             setIsGuesser(playerName);
             setIsPrompted(nextPlayer);
             setIsDrawer(nextPlayer);
@@ -109,6 +128,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('player-left', ({ playerName, players }) => {
+            if (players.length < 2) stopTimer();
             setPlayers(players || []);
             setLeaderboard(prev => {
                 const newLeaderboard = { ...prev };
@@ -117,15 +137,26 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             });
         });
 
+        socket?.on('time-up', ({ currentPlayer }: { currentPlayer: string }) => {
+            if (localStorage.getItem('playerName') === currentPlayer) {
+                toast.error('Time is up! Next player\'s turn.');
+            } else {
+                toast.error(`${currentPlayer.split('#')[0]}'s time is up!`);
+            }
+            if (players.length >= 2) startTimer();
+        });
+
         return () => {
+            clearInterval(timerIntervalRef.current);
             socket?.off('prompt-word-entry');
             socket?.off('word-submitted');
             socket?.off('update-leaderboard');
             socket?.off('correct-guess');
             socket?.off('wrong-guess');
             socket?.off('player-left');
+            socket?.off('time-up');
         };
-    }, []);
+    }, [players]);
 
     return (
         <div className={`absolute z-[0] ${width < 768 ? "h-[250px]" : `h-[${height - 54}px]`} md:right-0 md:top-[54px] bottom-0 md:max-w-[400px] lg:max-w-[450px] w-[100%] bg-gray-300 border-l border-gray-400 overflow-auto`}>
@@ -134,83 +165,77 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 <button className={`${tab === 1 ? "bg-gray-400" : "bg-gray-300"} py-2 font-semibold text-xl text-center`} onClick={() => setTab(1)}>Players</button>
             </div>
 
-            {tab === 0 ? players.length === 0 ? <p className='p-2 md:p-5'>No players in the room</p> :
-                players.length < 2 ? <p className='p-2 md:p-5'>Waiting for at least 2 players...</p> : (
-                    <>
-                        <div className='p-2 md:p-5'>
-                            {isWordEntryEnabled ? (
-                                <div className='w-full flex flex-wrap gap-2 items-center justify-between'>
-                                    <input
-                                        type="text"
-                                        value={word}
-                                        onChange={(e) => setWord(e.target.value)}
-                                        placeholder="Enter your word..."
-                                        className="w-full outline-none border p-2 rounded"
-                                    />
-                                    <button
-                                        onClick={handleSubmitWord}
-                                        className="bg-black text-white py-2 px-4 rounded hover:bg-transparent hover:text-black"
-                                    >
-                                        Submit Word
-                                    </button>
-                                </div>
-                            ) : isGuessEntryEnabled ? (
-                                <div className='w-full flex flex-col gap-2 justify-between'>
-                                    <div className='w-full flex flex-wrap gap-2 items-center'>
-                                        {guess.map((digit, index) => (
-                                            <input
-                                                key={index}
-                                                ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
-                                                className='w-10 h-10 border border-gray-400 rounded text-center outline-none'
-                                                value={digit}
-                                                onChange={(e) => handleChange(e, index)}
-                                                onKeyDown={(e) => handleKeyDown(e, index)}
-                                                maxLength={1}
-                                            />
-                                        ))}
+            {tab === 0 ?
+                (players.length === 0 ? <p className='p-2 md:p-5'>No players in the room</p> :
+                    players.length < 2 ? <p className='p-2 md:p-5'>Waiting for at least 2 players...</p> : (
+                        <>
+                            <div className='p-2 md:p-5'>
+                                <p className='font-bold text-center mb-4'>Time Left: {timeLeft} seconds</p>
+                                {isWordEntryEnabled ? (
+                                    <div className='w-full flex flex-wrap gap-2 items-center justify-between'>
+                                        <input
+                                            type="text"
+                                            value={word}
+                                            onChange={(e) => setWord(e.target.value)}
+                                            placeholder="Enter your word..."
+                                            className="w-full outline-none border p-2 rounded"
+                                        />
+                                        <button
+                                            onClick={handleSubmitWord}
+                                            className="w-fit bg-black text-white py-2 px-4 rounded active:scale-[0.8] duration-200"
+                                        >
+                                            Submit Word
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={handleSubmitGuess}
-                                        className="w-fit bg-black text-white py-2 px-4 rounded hover:bg-transparent hover:text-black"
-                                    >
-                                        Submit Guess
-                                    </button>
-                                </div>
-                            ) : isDrawer === localStorage.getItem('playerName') ? <p>You have submitted the word</p>
-                                : isGuesser === localStorage.getItem('playerName') ? <p>You have guessed the word</p> : (
-                                    <p>Waiting for {isPrompted.split('#')[0]} to submit the word...</p>
-                                )
-                            }
-                        </div>
-
-                        {Object.keys(leaderboard).length >= 2 && (
-                            <>
-                                <div className='sticky top-0 bg-gray-400 py-2 border-y border-gray-400 text-xl font-semibold text-center'>
-                                    Leaderboard
-                                </div>
-                                <ul className='p-2 md:p-5'>
-                                    {Object.entries(leaderboard).map(([player, points]) => (
-                                        <li key={player}>
-                                            {player.split('#')[0]} {player === assignedPlayerName && "(Me)"}: {points} {points > 1 ? "points" : "point"}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </>
+                                ) : isGuessEntryEnabled ? (
+                                    <div className='w-full flex flex-col gap-2 justify-between'>
+                                        <div className='w-full flex flex-wrap gap-2 items-center'>
+                                            {guess.map((digit, index) => (
+                                                <input
+                                                    key={index}
+                                                    ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
+                                                    className='w-10 h-10 border border-gray-400 rounded text-center outline-none'
+                                                    value={digit}
+                                                    onChange={(e) => handleChange(e, index)}
+                                                    onKeyDown={(e) => handleKeyDown(e, index)}
+                                                    type="text"
+                                                    maxLength={1}
+                                                />
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={handleSubmitGuess}
+                                            className="w-fit bg-black text-white py-2 px-4 rounded active:scale-[0.8] duration-200"
+                                        >
+                                            Submit Guess
+                                        </button>
+                                    </div>
+                                ) : isDrawer === localStorage.getItem('playerName') ? <p>You have submitted the word</p>
+                                    : isGuesser === localStorage.getItem('playerName') ? <p>You have guessed the word</p> : (
+                                        <p>Waiting for {isPrompted.split('#')[0]} to submit the word...</p>
+                                    )
+                                }
+                            </div>
+                        </>
+                    )
+                ) : tab === 1 && (
+                    <div className='p-2 md:p-5'>
+                        {players.length > 0 && (
+                            <div>
+                                <h2 className='text-center font-semibold text-2xl mb-4'>Players</h2>
+                                {Object.entries(leaderboard).map(([player, points]) => (
+                                    <div key={player} className='flex items-center justify-between mb-2'>
+                                        <span className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</span>
+                                        <span className='text-gray-500'>Score: {points}</span>
+                                    </div>
+                                ))}
+                            </div>
                         )}
-                    </>
-                )
-                : (
-                    <ul className='p-2 md:p-5'>
-                        {players.map((item, id) => (
-                            <li key={id}>
-                                {item.split('#')[0]} {item === assignedPlayerName && "(Me)"}
-                            </li>
-                        ))}
-                    </ul>
+                    </div>
                 )
             }
         </div>
     );
 };
 
-export default RoomSidebar;
+export default React.memo(RoomSidebar);

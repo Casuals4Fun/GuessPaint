@@ -32,6 +32,23 @@ let roomPlayers = {};
 let drawingWords = {};
 let leaderboards = {};
 let currentPlayerIndex = {};
+let roomTimers = {};
+
+const startTurnTimer = (roomID) => {
+    if (roomTimers[roomID]) clearTimeout(roomTimers[roomID]);
+
+    roomTimers[roomID] = setTimeout(() => {
+        const currentPlayer = roomPlayers[roomID][currentPlayerIndex[roomID]];
+        io.to(roomID).emit('time-up', { currentPlayer });
+
+        currentPlayerIndex[roomID] = (currentPlayerIndex[roomID] + 1) % roomPlayers[roomID].length;
+        io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
+
+        if (roomPlayers[roomID].length >= 2) {
+            startTurnTimer(roomID);
+        }
+    }, 60000);
+};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
@@ -73,6 +90,7 @@ io.on('connection', socket => {
 
         if (roomPlayers[roomID].length >= 2) {
             io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
+            startTurnTimer(roomID);
         }
 
         io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
@@ -98,6 +116,8 @@ io.on('connection', socket => {
                 io.to(roomID).emit('correct-guess', { playerName, nextPlayer: roomPlayers[roomID][currentPlayerIndex[roomID]] });
                 io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
             }
+
+            if (roomPlayers[roomID].length >= 2) startTurnTimer(roomID);
         } else {
             socket.emit('wrong-guess');
         }
@@ -145,7 +165,11 @@ io.on('connection', socket => {
             if (playerName) {
                 const index = roomPlayers[roomID].indexOf(playerName);
                 if (index !== -1) roomPlayers[roomID].splice(index, 1);
-                if (roomPlayers[roomID].length < 2) delete drawingWords[roomID];
+                if (roomPlayers[roomID].length < 2) {
+                    delete drawingWords[roomID];
+                    clearTimeout(roomTimers[roomID]);
+                    delete roomTimers[roomID];
+                }
                 if (roomPlayers[roomID].length === 0) {
                     delete roomPlayers[roomID];
                     delete leaderboards[roomID];
@@ -164,7 +188,7 @@ io.on('connection', socket => {
         delete rooms[socket.id];
 
         if (roomID && playerName) io.to(roomID).emit('player-left', { playerName, players: roomPlayers[roomID] });
-    }
+    };
 });
 
 app.get('/', async (req, res, next) => {
