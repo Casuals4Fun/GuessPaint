@@ -62,11 +62,9 @@ const RoomCanvas: React.FC = () => {
         });
 
         socketRef.current.on('player-left', ({ playerName, players }) => {
-            setPlayers(players || []);
-
             if (playerName === localStorage.getItem('playerName')) toast.success("Room left");
             else toast.error(`${playerName.split('#')[0]} left`);
-            
+
             if (players && players.length < 2) {
                 setCanDraw(false);
                 clear();
@@ -100,6 +98,12 @@ const RoomCanvas: React.FC = () => {
             setCanDraw(playerName === localStorage.getItem('playerName'));
         });
 
+        socketRef.current.on('correct-guess', () => {
+            setCanDraw(false);
+            clear();
+            socketRef.current.emit('clear');
+        });
+
         setupCompleted.current = true;
 
         cleanupFunction = () => {
@@ -114,6 +118,7 @@ const RoomCanvas: React.FC = () => {
             socketRef.current.off('draw-line');
             socketRef.current.off('clear');
             socketRef.current.off('word-submitted');
+            socketRef.current.off('correct-guess');
             setupCompleted.current = false;
         };
 

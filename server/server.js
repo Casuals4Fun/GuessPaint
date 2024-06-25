@@ -31,6 +31,7 @@ let rooms = {};
 let roomPlayers = {};
 let drawingWords = {};
 let leaderboards = {};
+let currentPlayerIndex = {};
 
 io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
@@ -64,12 +65,14 @@ io.on('connection', socket => {
             leaderboards[roomID][uniquePlayerName] = 0;
         }
 
+        if (!currentPlayerIndex[roomID]) currentPlayerIndex[roomID] = 0;
+
         socket.emit('assign-player-name', uniquePlayerName);
         socket.broadcast.to(roomID).emit('new-player', playerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
 
         if (roomPlayers[roomID].length >= 2) {
-            io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][0]);
+            io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
         }
 
         io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
@@ -82,9 +85,17 @@ io.on('connection', socket => {
 
     socket.on('guess-word', ({ roomID, playerName, guess }) => {
         if (drawingWords[roomID] && drawingWords[roomID].toLowerCase() === guess.toLowerCase()) {
+            const numPlayers = roomPlayers[roomID].length;
+            const correctGuesses = roomPlayers[roomID].filter(player => player !== roomPlayers[roomID][currentPlayerIndex[roomID]] && player !== playerName).length;
+
+            if (numPlayers === 2 || correctGuesses === numPlayers - 2) {
+                currentPlayerIndex[roomID] = (currentPlayerIndex[roomID] + 1) % numPlayers;
+                io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
+            }
+
             if (leaderboards[roomID] && leaderboards[roomID][playerName] !== undefined) {
                 leaderboards[roomID][playerName] += 1;
-                io.to(roomID).emit('correct-guess', { playerName });
+                io.to(roomID).emit('correct-guess', { playerName, nextPlayer: roomPlayers[roomID][currentPlayerIndex[roomID]] });
                 io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
             }
         } else {
@@ -138,9 +149,14 @@ io.on('connection', socket => {
                 if (roomPlayers[roomID].length === 0) {
                     delete roomPlayers[roomID];
                     delete leaderboards[roomID];
+                    delete currentPlayerIndex[roomID];
                 } else {
                     delete leaderboards[roomID][playerName];
                     io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
+                    if (currentPlayerIndex[roomID] >= roomPlayers[roomID].length) {
+                        currentPlayerIndex[roomID] = 0;
+                    }
+                    io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
                 }
             }
         }
@@ -155,7 +171,7 @@ app.get('/', async (req, res, next) => {
     try {
         res.send({
             status: 201, message: "GuessPaint API running!",
-            rooms, roomPlayers, drawingWords, leaderboards
+            rooms, roomPlayers, drawingWords, leaderboards, currentPlayerIndex
         });
     } catch (error) {
         res.send({ message: error });
