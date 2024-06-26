@@ -43,10 +43,6 @@ const startTurnTimer = (roomID) => {
 
         currentPlayerIndex[roomID] = (currentPlayerIndex[roomID] + 1) % roomPlayers[roomID].length;
         io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
-
-        if (roomPlayers[roomID].length >= 2) {
-            startTurnTimer(roomID);
-        }
     }, 60000);
 };
 
@@ -90,7 +86,6 @@ io.on('connection', socket => {
 
         if (roomPlayers[roomID].length >= 2) {
             io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
-            startTurnTimer(roomID);
         }
 
         io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
@@ -99,6 +94,7 @@ io.on('connection', socket => {
     socket.on('submit-word', ({ roomID, playerName, word }) => {
         drawingWords[roomID] = word;
         io.to(roomID).emit('word-submitted', { playerName: playerName, wordLength: word.length });
+        startTurnTimer(roomID);
     });
 
     socket.on('guess-word', ({ roomID, playerName, guess }) => {
@@ -116,8 +112,6 @@ io.on('connection', socket => {
                 io.to(roomID).emit('correct-guess', { playerName, nextPlayer: roomPlayers[roomID][currentPlayerIndex[roomID]] });
                 io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
             }
-
-            if (roomPlayers[roomID].length >= 2) startTurnTimer(roomID);
         } else {
             socket.emit('wrong-guess');
         }

@@ -8,6 +8,7 @@ import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
 import RoomSidebar from './RoomSidebar';
+import DrawingSubject from './Input';
 
 const RoomCanvas: React.FC = () => {
     const roomID = useParams().roomID as string;
@@ -20,6 +21,7 @@ const RoomCanvas: React.FC = () => {
     const setupCompleted = useRef(false);
     const joinedRoomRef = useRef(false);
     const [canDraw, setCanDraw] = useState(false);
+    const [isWordEntryEnabled, setIsWordEntryEnabled] = useState(false);
 
     const { canvasRef, onMouseDown, clear } = useDraw(createLine);
 
@@ -66,8 +68,10 @@ const RoomCanvas: React.FC = () => {
             else toast.error(`${playerName.split('#')[0]} left`);
 
             if (players && players.length < 2) {
+                setIsWordEntryEnabled(false);
                 setCanDraw(false);
                 clear();
+                socketRef.current.emit('clear');
             }
         });
 
@@ -94,7 +98,13 @@ const RoomCanvas: React.FC = () => {
 
         socketRef.current.on('clear', clear);
 
+        socketRef.current.on('prompt-word-entry', (playerName: string) => {
+            const currentPlayerName = localStorage.getItem('playerName');
+            setIsWordEntryEnabled(currentPlayerName === playerName);
+        });
+
         socketRef.current.on('word-submitted', ({ playerName, wordLength }) => {
+            setIsWordEntryEnabled(false);
             setCanDraw(playerName === localStorage.getItem('playerName'));
         });
 
@@ -106,6 +116,8 @@ const RoomCanvas: React.FC = () => {
 
         socketRef.current.on('time-up', () => {
             setCanDraw(false);
+            clear();
+            socketRef.current.emit('clear');
         });
 
         setupCompleted.current = true;
@@ -121,6 +133,7 @@ const RoomCanvas: React.FC = () => {
             socketRef.current.off('canvas-state-from-server');
             socketRef.current.off('draw-line');
             socketRef.current.off('clear');
+            socketRef.current.off('prompt-word-entry');
             socketRef.current.off('word-submitted');
             socketRef.current.off('correct-guess');
             socketRef.current.off('time-up');
@@ -128,7 +141,7 @@ const RoomCanvas: React.FC = () => {
         };
 
         return cleanupFunction;
-    }, [players]);
+    }, []);
 
     return (
         <div className='relative'>
@@ -155,6 +168,13 @@ const RoomCanvas: React.FC = () => {
             />
 
             <RoomSidebar socketRef={socketRef} />
+
+            {isWordEntryEnabled && (
+                <DrawingSubject
+                    socketRef={socketRef}
+                    exit={() => socketRef.current.emit('leave-room')}
+                />
+            )}
         </div>
     );
 };
