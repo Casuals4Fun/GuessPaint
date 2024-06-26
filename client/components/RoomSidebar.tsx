@@ -16,14 +16,12 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const { players, setPlayers, assignedPlayerName } = useSidebarStore();
     const [tab, setTab] = useState(0);
     const [word, setWord] = useState('');
-    const [isWordEntryEnabled, setIsWordEntryEnabled] = useState(false);
     const [guessLength, setGuessLength] = useState<number>(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
     const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
     const [isPrompted, setIsPrompted] = useState('');
     const [isDrawer, setIsDrawer] = useState('');
-    const [isGuesser, setIsGuesser] = useState('');
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
     const [timeLeft, setTimeLeft] = useState(60);
     const timerIntervalRef = useRef<number | NodeJS.Timeout>();
@@ -85,25 +83,18 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         };
 
         socket?.on('prompt-word-entry', (playerName: string) => {
-            if (players.length >= 2) startTimer();
-            const currentPlayerName = localStorage.getItem('playerName');
-            setIsWordEntryEnabled(currentPlayerName === playerName);
             setIsPrompted(playerName);
             setIsGuessEntryEnabled(false);
+            setIsDrawer(playerName);
         });
 
         socket?.on('word-submitted', ({ playerName, wordLength }) => {
+            startTimer();
             setGuessLength(wordLength);
             setGuess(Array(wordLength).fill(''));
             const assignedName = localStorage.getItem('playerName');
-            if (playerName === assignedName) {
-                setIsWordEntryEnabled(false);
-                setIsGuessEntryEnabled(false);
-                toast.success(`You have submitted the word.`);
-            } else {
-                setIsWordEntryEnabled(false);
-                setIsGuessEntryEnabled(true);
-            }
+            if (playerName === assignedName) toast.success(`You have submitted the word.`);
+            else setIsGuessEntryEnabled(true);
             setIsDrawer(playerName);
         });
 
@@ -112,13 +103,12 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('correct-guess', ({ playerName, nextPlayer }: { playerName: string, nextPlayer: string }) => {
-            if (players.length >= 2) startTimer();
+            stopTimer();
             if (localStorage.getItem('playerName') === playerName) {
                 setIsGuessEntryEnabled(false);
                 toast.success('You guessed the correct word');
             }
             else toast.success(`${playerName.split('#')[0]} guessed the correct word`);
-            setIsGuesser(playerName);
             setIsPrompted(nextPlayer);
             setIsDrawer(nextPlayer);
         });
@@ -143,7 +133,6 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             } else {
                 toast.error(`${currentPlayer.split('#')[0]}'s time is up!`);
             }
-            if (players.length >= 2) startTimer();
         });
 
         return () => {
@@ -156,7 +145,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             socket?.off('player-left');
             socket?.off('time-up');
         };
-    }, [players]);
+    }, []);
 
     return (
         <div className={`absolute z-[0] ${width < 768 ? "h-[250px]" : `h-[${height - 54}px]`} md:right-0 md:top-[54px] bottom-0 md:max-w-[400px] lg:max-w-[450px] w-[100%] bg-gray-300 border-l border-gray-400 overflow-auto`}>
@@ -171,23 +160,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                         <>
                             <div className='p-2 md:p-5'>
                                 <p className='font-bold text-center mb-4'>Time Left: {timeLeft} seconds</p>
-                                {isWordEntryEnabled ? (
-                                    <div className='w-full flex flex-wrap gap-2 items-center justify-between'>
-                                        <input
-                                            type="text"
-                                            value={word}
-                                            onChange={(e) => setWord(e.target.value)}
-                                            placeholder="Enter your word..."
-                                            className="w-full outline-none border p-2 rounded"
-                                        />
-                                        <button
-                                            onClick={handleSubmitWord}
-                                            className="w-fit bg-black text-white py-2 px-4 rounded active:scale-[0.8] duration-200"
-                                        >
-                                            Submit Word
-                                        </button>
-                                    </div>
-                                ) : isGuessEntryEnabled ? (
+                                {isGuessEntryEnabled ? (
                                     <div className='w-full flex flex-col gap-2 justify-between'>
                                         <div className='w-full flex flex-wrap gap-2 items-center'>
                                             {guess.map((digit, index) => (
@@ -210,11 +183,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                             Submit Guess
                                         </button>
                                     </div>
-                                ) : isDrawer === localStorage.getItem('playerName') ? <p>You have submitted the word</p>
-                                    : isGuesser === localStorage.getItem('playerName') ? <p>You have guessed the word</p> : (
-                                        <p>Waiting for {isPrompted.split('#')[0]} to submit the word...</p>
-                                    )
-                                }
+                                ) : isPrompted !== assignedPlayerName && <p>Waiting for {isPrompted.split('#')[0]} to submit the word...</p>}
                             </div>
                         </>
                     )
