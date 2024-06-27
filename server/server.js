@@ -33,6 +33,7 @@ let drawingWords = {};
 let leaderboards = {};
 let currentPlayerIndex = {};
 let countdownIntervals = {};
+let votes = {};
 
 const startTurnTimer = (roomID) => {
     if (countdownIntervals[roomID]) clearInterval(countdownIntervals[roomID]);
@@ -201,6 +202,58 @@ io.on('connection', socket => {
         }
     });
 
+    socket.on('initiate-vote-kick', ({ roomID, player, voter }) => {
+        if (!roomPlayers[roomID] || !roomPlayers[roomID].includes(player)) return;
+
+        const numPlayers = roomPlayers[roomID].length;
+        if (numPlayers === 2) {
+            kickPlayer(roomID, player);
+        } else {
+            if (!votes[player]) {
+                votes[player] = { count: 0, required: numPlayers - 1, voters: [] };
+                io.to(roomID).emit('vote-initiated', { player, voter });
+            }
+
+            if (votes[player].voters.includes(voter)) return io.to(roomID).emit('vote-initiated', { player, voter });
+
+            votes[player].count += 1;
+            votes[player].voters.push(voter);
+
+            io.to(roomID).emit('vote-progress', { player, votes: votes[player].count });
+
+            if (votes[player].count >= votes[player].required) {
+                kickPlayer(roomID, player);
+            }
+        }
+    });
+
+    const kickPlayer = (roomID, player) => {
+        const playerIndex = roomPlayers[roomID].indexOf(player);
+        if (playerIndex !== -1) roomPlayers[roomID].splice(playerIndex, 1);
+
+        delete leaderboards[roomID][player];
+        delete votes[player];
+
+        io.to(roomID).emit('player-kicked', { player });
+        io.to(roomID).emit('players-in-room', roomPlayers[roomID]);
+        io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
+
+        if (roomPlayers[roomID].length < 2) {
+            delete drawingWords[roomID];
+            stopTurnTimer(roomID);
+        }
+        if (roomPlayers[roomID].length === 0) {
+            delete roomPlayers[roomID];
+            delete leaderboards[roomID];
+            delete currentPlayerIndex[roomID];
+        } else if (roomPlayers[roomID].length >= 2) {
+            if (currentPlayerIndex[roomID] >= roomPlayers[roomID].length) {
+                currentPlayerIndex[roomID] = 0;
+            }
+            io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
+        }
+    };
+
     socket.on('leave-room', () => leaveRoom());
     socket.on('disconnect', () => leaveRoom());
 
@@ -221,8 +274,24 @@ io.on('connection', socket => {
                     delete roomPlayers[roomID];
                     delete leaderboards[roomID];
                     delete currentPlayerIndex[roomID];
+                    delete votes[roomID];
                 } else {
                     delete leaderboards[roomID][playerName];
+
+                    for (const player in votes) {
+                        const vote = votes[player];
+                        const voterIndex = vote.voters.indexOf(playerName);
+                        if (voterIndex !== -1) {
+                            vote.voters.splice(voterIndex, 1);
+                            vote.count -= 1;
+                        }
+                        vote.required = roomPlayers[roomID].length - 1;
+
+                        io.to(roomID).emit('vote-progress', { player, votes: vote.count });
+
+                        if (vote.count >= vote.required) kickPlayer(roomID, player);
+                    }
+
                     io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
                     if (currentPlayerIndex[roomID] >= roomPlayers[roomID].length) {
                         currentPlayerIndex[roomID] = 0;
@@ -242,7 +311,7 @@ app.get('/', async (req, res, next) => {
     try {
         res.send({
             status: 201, message: "GuessPaint API running!",
-            rooms, roomPlayers, drawingWords, leaderboards, currentPlayerIndex
+            rooms, roomPlayers, drawingWords, leaderboards, currentPlayerIndex, votes
         });
     } catch (error) {
         res.send({ message: error });

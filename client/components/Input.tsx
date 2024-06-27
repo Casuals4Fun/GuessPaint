@@ -37,7 +37,7 @@ const DrawingSubject: React.FC<SubjectProps> = ({ socketRef, exit }) => {
                         onChange={e => setWord(e.target.value)}
                     />
                     <div className='flex justify-between items-center'>
-                        <Link href='/' onClick={exit} className='py-2 rounded active:scale-[0.8] duration-200'>
+                        <Link href='/' onClick={exit} className='py-2 rounded underline active:scale-[0.8] duration-200'>
                             Leave Room
                         </Link>
                         <button className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-[0.8] duration-200'>
@@ -85,7 +85,6 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
             <div className="bg-black opacity-70 fixed inset-0"></div>
             <div className='bg-white w-[95%] md:w-[500px] mx-auto rounded-lg shadow-lg overflow-hidden relative'>
                 <div className="p-5 h-full flex flex-col justify-between gap-5">
-                    <p className='text-[20px] text-center'>Guess Paint</p>
                     <div className='flex items-center justify-between'>
                         <p className='w-fit'>Your name</p>
                         <input
@@ -97,7 +96,7 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
                     </div>
                     <div className='flex justify-between items-center'>
                         <button
-                            className='py-2 rounded active:scale-[0.8] duration-200'
+                            className='py-2 rounded underline active:scale-[0.8] duration-200'
                             onClick={() => setIsEditing(false)}
                         >
                             Close

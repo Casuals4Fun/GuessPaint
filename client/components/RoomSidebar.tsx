@@ -2,9 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import useWindowSize from "@/utils/useWindowSize";
 import { useSidebarStore } from "@/store";
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { MdEdit } from "react-icons/md"
+import { MdEdit, MdRemove, MdRemoveCircle, MdRemoveCircleOutline } from "react-icons/md"
 import { ChangeName } from './Input';
 
 interface RoomSidebarProps {
@@ -13,6 +13,7 @@ interface RoomSidebarProps {
 
 const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const roomID = useParams().roomID as string;
+    const router = useRouter();
 
     const { width, height } = useWindowSize();
     const { players, setPlayers, assignedPlayerName, setAssignedPlayerName } = useSidebarStore();
@@ -27,9 +28,11 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const timerIntervalRef = useRef<number | NodeJS.Timeout>();
 
     const [isEditing, setIsEditing] = useState(false);
+    const [votes, setVotes] = useState<{ [key: string]: number }>({});
 
-    const handleEditClick = () => {
-        setIsEditing(true);
+    const handleKickVote = (player: string) => {
+        const socket = socketRef.current;
+        socket?.emit('initiate-vote-kick', { roomID, player, voter: localStorage.getItem('playerName') });
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -133,6 +136,33 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             if (isPrompted === oldName) setIsPrompted(newName);
         });
 
+        socket?.on('vote-initiated', ({ player, voter }) => {
+            if (voter === localStorage.getItem('playerName')) {
+                toast.success(`You have voted to kick ${player.split('#')[0]}`);
+            }
+            else {
+                toast.success(`${voter.split('#')[0]} have voted to kick ${player === localStorage.getItem('playerName') ? 'you' : player.split('#')[0]}`);
+            }
+        });
+
+        socket?.on('vote-progress', ({ player, votes }) => {
+            setVotes((prev) => ({ ...prev, [player]: votes }));
+        });
+
+        socket?.on('player-kicked', ({ player }) => {
+            setVotes((prev) => {
+                const newVotes = { ...prev };
+                delete newVotes[player];
+                return newVotes;
+            });
+            if (player === localStorage.getItem('playerName')) {
+                socket?.emit('leave-room');
+                router.push('/', { shallow: true } as any);
+                toast.error('You have been kicked from the room');
+            }
+            else toast.success(`${player.split('#')[0]} has been kicked from the room.`);
+        });
+
         return () => {
             clearInterval(timerIntervalRef.current);
             socket?.off('prompt-word-entry');
@@ -144,6 +174,9 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             socket?.off('time-up');
             socket?.off('timer-update');
             socket?.off('player-name-changed');
+            socket?.off('vote-initiated');
+            socket?.off('vote-progress');
+            socket?.off('player-kicked');
         };
     }, []);
 
@@ -193,11 +226,16 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                 <div key={player} className='flex items-center justify-between mb-2'>
                                     <div className='flex items-center gap-2'>
                                         <p className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</p>
-                                        {player === assignedPlayerName && (
+                                        {player === assignedPlayerName ? (
                                             <>
                                                 <button onClick={() => setIsEditing(!isEditing)}><MdEdit size={20} /></button>
                                                 {isEditing && <ChangeName socketRef={socketRef} setIsEditing={setIsEditing} />}
                                             </>
+                                        ) : (
+                                            <button title='Vote Kick' onClick={() => handleKickVote(player)} className='flex items-center gap-1'>
+                                                <MdRemoveCircleOutline size={20} />
+                                                {votes[player] ? `(${votes[player]})` : ''}
+                                            </button>
                                         )}
                                     </div>
                                     <p className='text-gray-500'>Score: {points}</p>
