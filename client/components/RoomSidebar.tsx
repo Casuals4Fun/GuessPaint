@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Socket } from 'socket.io-client';
-import useWindowSize from "@/utils/useWindowSize";
-import { useSidebarStore } from "@/store";
-import { useParams, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { MdEdit, MdRemove, MdRemoveCircle, MdRemoveCircleOutline } from "react-icons/md"
-import { ChangeName } from './Input';
+import React, { useEffect, useState, useRef } from 'react'
+import { Socket } from 'socket.io-client'
+import { useParams, useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import useWindowSize from '@/utils/useWindowSize'
+import { useSidebarStore } from '@/store'
+import { MdEdit, MdRemoveCircleOutline } from 'react-icons/md'
+import { IoPerson } from 'react-icons/io5'
+import { ChangeName } from './Input'
 
 interface RoomSidebarProps {
     socketRef: React.MutableRefObject<Socket | null>;
@@ -210,7 +211,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                         </div>
                                         <button
                                             onClick={handleSubmitGuess}
-                                            className="w-fit bg-black text-white py-2 px-4 rounded active:scale-[0.8] duration-200"
+                                            className="w-fit bg-black text-white py-2 px-4 rounded active:scale-90 duration-200"
                                         >
                                             Submit Guess
                                         </button>
@@ -232,10 +233,26 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                                 {isEditing && <ChangeName socketRef={socketRef} setIsEditing={setIsEditing} />}
                                             </>
                                         ) : (
-                                            <button title='Vote Kick' onClick={() => handleKickVote(player)} className='flex items-center gap-1'>
-                                                <MdRemoveCircleOutline size={20} />
-                                                {votes[player] ? `(${votes[player]})` : ''}
-                                            </button>
+                                            <>
+                                                <button title='Vote Kick' onClick={() => handleKickVote(player)} className='flex items-center gap-1'>
+                                                    <MdRemoveCircleOutline size={20} />
+                                                </button>
+                                                {votes[player] ? (
+                                                    <span className='flex items-center'>
+                                                        {Array(votes[player])
+                                                            .fill(null)
+                                                            .map((_, index) => (
+                                                                <IoPerson key={`current-vote-${index}`} size={15} />
+                                                            ))}
+                                                        /
+                                                        {Array(players.length - 1)
+                                                            .fill(null)
+                                                            .map((_, index) => (
+                                                                <IoPerson key={`total-vote-${index}`} size={15} />
+                                                            ))}
+                                                    </span>
+                                                ) : null}
+                                            </>
                                         )}
                                     </div>
                                     <p className='text-gray-500'>Score: {points}</p>

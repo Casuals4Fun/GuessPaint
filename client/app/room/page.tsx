@@ -1,9 +1,9 @@
-"use client"
+'use client'
 
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import usePlayerName from '@/hooks/usePlayerName';
-import PlayerName from '@/components/PlayerName';
-import Invite from '@/components/Invite';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import usePlayerName from '@/hooks/usePlayerName'
+import PlayerName from '@/components/PlayerName'
+import Invite from '@/components/Invite'
 
 const Room = () => {
     const { loading, playerName, savePlayerName } = usePlayerName();

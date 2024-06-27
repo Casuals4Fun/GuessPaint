@@ -1,18 +1,16 @@
-"use client"
-
-import React, { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import React, { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { useInviteStore } from '@/store';
-import { useRoom } from '@/hooks/useRoom';
-import { toast } from 'sonner';
-import { BarLoader } from 'react-spinners';
-import { IoIosArrowBack } from 'react-icons/io';
-import { AiOutlineClose } from 'react-icons/ai';
-import { FaPlay } from "react-icons/fa";
-import { GrAdd } from 'react-icons/gr';
-import { GoPeople } from 'react-icons/go';
-import { BsFillClipboardCheckFill, BsFillClipboardFill } from 'react-icons/bs';
+import { useInviteStore } from '@/store'
+import { useRoom } from '@/hooks/useRoom'
+import { toast } from 'sonner'
+import { BarLoader } from 'react-spinners'
+import { IoIosArrowBack } from 'react-icons/io'
+import { AiOutlineClose } from 'react-icons/ai'
+import { FaPlay } from "react-icons/fa"
+import { GrAdd } from 'react-icons/gr'
+import { GoPeople } from 'react-icons/go'
+import { BsFillClipboardCheckFill, BsFillClipboardFill } from 'react-icons/bs'
 
 const Invite = () => {
     const roomID = useParams().roomID as string;
@@ -198,7 +196,7 @@ const JoinRoom = () => {
     };
 
     return (
-        <div className='p-5 w-full min-h-[400px] flex flex-col overflow-hidden'>
+        <div className='p-5 w-full h-[400px] flex flex-col overflow-hidden'>
             <p className='text-[20px] text-center mb-3'>
                 Join Room
             </p>
@@ -220,7 +218,7 @@ const JoinRoom = () => {
             </div>
             <div className='flex justify-end items-center mt-3'>
                 <button
-                    className={`${isInputJoining ? "bg-white cursor-not-allowed" : "bg-black hover:bg-white text-white hover:text-black duration-200"} w-[80px] h-[40px] py-2 px-4 rounded-lg`}
+                    className={`${isInputJoining ? "bg-white cursor-not-allowed" : "bg-black text-white active:scale-90 duration-200"} w-[80px] h-[40px] py-2 px-4 rounded`}
                     onClick={() => handleJoinRoom(roomID.join(''), true)}
                 >
                     {isInputJoining ? <BarLoader height={4} width={50} /> : "Join"}
@@ -303,7 +301,7 @@ const ShareRoom = () => {
                     </div>
                     <div className='w-full min-h-[42px] flex border border-gray-300 rounded-md pl-2 overflow-hidden'>
                         <div className='w-[90%] min-h-full text-ellipsis overflow-hidden border-r border-gray-300 py-2'>
-                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`}
+                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL?.split('http://' || 'https://')[1]}/room/${roomID}`}
                         </div>
                         <button
                             title={`${hasCopied ? "Copied" : "Copy URL"}`}
