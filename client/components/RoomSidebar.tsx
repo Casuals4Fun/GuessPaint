@@ -152,7 +152,6 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                                     onChange={(e) => handleChange(e, index)}
                                                     onKeyDown={(e) => handleKeyDown(e, index)}
                                                     maxLength={1}
-                                                    autoFocus={index === 0}
                                                 />
                                             ))}
                                         </div>
@@ -170,15 +169,12 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 ) : tab === 1 && (
                     <div className='p-2 md:p-5'>
                         {players.length > 0 && (
-                            <div>
-                                <h2 className='text-center font-semibold text-2xl mb-4'>Players</h2>
-                                {Object.entries(leaderboard).map(([player, points]) => (
-                                    <div key={player} className='flex items-center justify-between mb-2'>
-                                        <span className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</span>
-                                        <span className='text-gray-500'>Score: {points}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            Object.entries(leaderboard).map(([player, points]) => (
+                                <div key={player} className='flex items-center justify-between mb-2'>
+                                    <span className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</span>
+                                    <span className='text-gray-500'>Score: {points}</span>
+                                </div>
+                            ))
                         )}
                     </div>
                 )

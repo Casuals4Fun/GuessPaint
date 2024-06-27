@@ -37,6 +37,8 @@ const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
                         </button>
                     </div>
                 </div>
+                <div className='w-full h-[1px] bg-gray-200' />
+                <p className='text-center text-sm p-3'>Made with ❤️ by <a href="https://github.com/Shubham-Lal" target="_blank" rel="noopener noreferrer" className='underline'>Shubham Lal</a></p>
             </div>
         </div>
     )
