@@ -139,18 +139,17 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         socket?.on('vote-initiated', ({ player, voter }) => {
             if (voter === localStorage.getItem('playerName')) {
                 toast.success(`You have voted to kick ${player.split('#')[0]}`);
-            }
-            else {
-                toast.success(`${voter.split('#')[0]} have voted to kick ${player === localStorage.getItem('playerName') ? 'you' : player.split('#')[0]}`);
+            } else {
+                toast.success(`${voter.split('#')[0]} has voted to kick ${player === localStorage.getItem('playerName') ? 'you' : player.split('#')[0]}`);
             }
         });
 
         socket?.on('vote-progress', ({ player, votes }) => {
-            setVotes((prev) => ({ ...prev, [player]: votes }));
+            setVotes(prev => ({ ...prev, [player]: votes }));
         });
 
         socket?.on('player-kicked', ({ player }) => {
-            setVotes((prev) => {
+            setVotes(prev => {
                 const newVotes = { ...prev };
                 delete newVotes[player];
                 return newVotes;
@@ -159,8 +158,9 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 socket?.emit('leave-room');
                 router.push('/', { shallow: true } as any);
                 toast.error('You have been kicked from the room');
+            } else {
+                toast.success(`${player.split('#')[0]} has been kicked from the room.`);
             }
-            else toast.success(`${player.split('#')[0]} has been kicked from the room.`);
         });
 
         return () => {
