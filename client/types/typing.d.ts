@@ -27,7 +27,7 @@ type ToolbarState = {
 
 type SidebarState = {
     players: string[];
-    setPlayers: (players: string[]) => void;
+    setPlayers: (players: string[] | ((prevPlayers: string[]) => string[])) => void;
     addPlayer: (player: string) => void;
     assignedPlayerName: string;
     setAssignedPlayerName: (playerName: string) => void;

@@ -8,7 +8,7 @@ import { drawLine } from '@/utils/drawLine';
 import { connectSocket } from '@/utils/connectSocket';
 import RoomToolbar from './RoomToolbar';
 import RoomSidebar from './RoomSidebar';
-import DrawingSubject from './Input';
+import { DrawingSubject } from './Input';
 
 const RoomCanvas: React.FC = () => {
     const roomID = useParams().roomID as string;

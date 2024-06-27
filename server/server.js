@@ -138,6 +138,39 @@ io.on('connection', socket => {
         }
     });
 
+    socket.on('change-name', ({ roomID, oldName, newName }, callback) => {
+        if (!roomID || !oldName || !newName) {
+            return callback({ success: false, message: 'Invalid data' });
+        }
+
+        const playersInRoom = roomPlayers[roomID];
+        if (!playersInRoom) {
+            return callback({ success: false, message: 'Room not found' });
+        }
+
+        const playerIndex = playersInRoom.indexOf(oldName);
+        if (playerIndex === -1) {
+            return callback({ success: false, message: 'Old name not found in room' });
+        }
+
+        const newNameWithID = `${newName}#${socket.id}`;
+        if (playersInRoom.includes(newNameWithID)) {
+            return callback({ success: false, message: 'Name already taken' });
+        }
+
+        playersInRoom[playerIndex] = newNameWithID;
+
+        const score = leaderboards[roomID][oldName];
+        delete leaderboards[roomID][oldName];
+        leaderboards[roomID][newNameWithID] = score;
+
+        io.to(roomID).emit('player-name-changed', { oldName, newName: newNameWithID });
+
+        rooms[socket.id] = roomID;
+
+        callback({ success: true });
+    });
+
     socket.on('client-ready', () => {
         const roomID = rooms[socket.id];
         if (roomID) {
