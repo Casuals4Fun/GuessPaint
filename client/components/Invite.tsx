@@ -257,9 +257,6 @@ const JoinRoom = () => {
 const ShareRoom = () => {
     const roomID = useParams().roomID as string;
 
-    const { handleCreateRoom, isCreating } = useRoom();
-    const { setPreference } = useInviteStore();
-
     const [hasCopied, setHasCopied] = useState<boolean>(false);
     const copyToClipboard = async () => {
         const url = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`;
@@ -314,15 +311,6 @@ const ShareRoom = () => {
                             onClick={copyToClipboard}
                         >
                             {hasCopied ? <BsFillClipboardCheckFill size={20} /> : <BsFillClipboardFill size={20} />}
-                        </button>
-                    </div>
-                    <div className='w-full h-[1px] bg-gray-200' />
-                    <div className='w-full flex flex-wrap gap-[10px] sm:gap-0 justify-between text-md'>
-                        <button className='bg-gray-100 px-3 py-2 w-fit hover:bg-gray-200 rounded' onClick={handleCreateRoom} disabled={isCreating}>
-                            Create Room
-                        </button>
-                        <button className='bg-gray-100 px-3 py-2 w-fit hover:bg-gray-200 rounded' onClick={() => setPreference("Join")}>
-                            Join Room
                         </button>
                     </div>
                 </>
