@@ -32,18 +32,35 @@ let roomPlayers = {};
 let drawingWords = {};
 let leaderboards = {};
 let currentPlayerIndex = {};
-let roomTimers = {};
+let countdownIntervals = {};
 
 const startTurnTimer = (roomID) => {
-    if (roomTimers[roomID]) clearTimeout(roomTimers[roomID]);
+    if (countdownIntervals[roomID]) clearInterval(countdownIntervals[roomID]);
 
-    roomTimers[roomID] = setTimeout(() => {
-        const currentPlayer = roomPlayers[roomID][currentPlayerIndex[roomID]];
-        io.to(roomID).emit('time-up', { currentPlayer });
+    let timeLeft = 60;
+    io.to(roomID).emit('timer-update', timeLeft);
 
-        currentPlayerIndex[roomID] = (currentPlayerIndex[roomID] + 1) % roomPlayers[roomID].length;
-        io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
-    }, 60000);
+    countdownIntervals[roomID] = setInterval(() => {
+        timeLeft -= 1;
+        io.to(roomID).emit('timer-update', timeLeft);
+
+        if (timeLeft <= 0) {
+            clearInterval(countdownIntervals[roomID]);
+            const currentPlayer = roomPlayers[roomID][currentPlayerIndex[roomID]];
+            io.to(roomID).emit('timer-update', 0);
+            io.to(roomID).emit('time-up', { currentPlayer });
+
+            currentPlayerIndex[roomID] = (currentPlayerIndex[roomID] + 1) % roomPlayers[roomID].length;
+            io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
+        }
+    }, 1000);
+};
+
+const stopTurnTimer = (roomID) => {
+    if (countdownIntervals[roomID]) {
+        clearInterval(countdownIntervals[roomID]);
+        io.to(roomID).emit('timer-update', 60);
+    }
 };
 
 io.on('connection', socket => {
@@ -94,7 +111,10 @@ io.on('connection', socket => {
     socket.on('submit-word', ({ roomID, playerName, word }) => {
         drawingWords[roomID] = word;
         io.to(roomID).emit('word-submitted', { playerName: playerName, wordLength: word.length });
-        startTurnTimer(roomID);
+
+        if (roomPlayers[roomID].length >= 0) {
+            startTurnTimer(roomID);
+        }
     });
 
     socket.on('guess-word', ({ roomID, playerName, guess }) => {
@@ -111,6 +131,7 @@ io.on('connection', socket => {
                 leaderboards[roomID][playerName] += 1;
                 io.to(roomID).emit('correct-guess', { playerName, nextPlayer: roomPlayers[roomID][currentPlayerIndex[roomID]] });
                 io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
+                stopTurnTimer(roomID);
             }
         } else {
             socket.emit('wrong-guess');
@@ -161,8 +182,7 @@ io.on('connection', socket => {
                 if (index !== -1) roomPlayers[roomID].splice(index, 1);
                 if (roomPlayers[roomID].length < 2) {
                     delete drawingWords[roomID];
-                    clearTimeout(roomTimers[roomID]);
-                    delete roomTimers[roomID];
+                    stopTurnTimer(roomID);
                 }
                 if (roomPlayers[roomID].length === 0) {
                     delete roomPlayers[roomID];
