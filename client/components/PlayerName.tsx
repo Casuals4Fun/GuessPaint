@@ -30,13 +30,15 @@ const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
                     </div>
                     <div className='flex justify-end items-center'>
                         <button
-                            className='bg-black hover:bg-white text-white hover:text-black duration-200 h-[40px] py-2 px-4 rounded-lg'
+                            className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-[0.8] duration-200'
                             onClick={handlePlayerName}
                         >
                             Proceed
                         </button>
                     </div>
                 </div>
+                <div className='w-full h-[1px] bg-gray-200' />
+                <p className='text-center text-sm p-3'>Made with ❤️ by <a href="https://github.com/Shubham-Lal" target="_blank" rel="noopener noreferrer" className='underline'>Shubham Lal</a></p>
             </div>
         </div>
     )

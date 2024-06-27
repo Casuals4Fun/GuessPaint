@@ -30,6 +30,8 @@ const Invite = () => {
                 ) : preference === "Share" ? (
                     <ShareRoom />
                 ) : null}
+                <div className='w-full h-[1px] bg-gray-200' />
+                <p className='text-center text-sm p-3'>Made with ❤️ by <a href="https://github.com/Shubham-Lal" target="_blank" rel="noopener noreferrer" className='underline'>Shubham Lal</a></p>
 
                 {(preference !== "Share" && preference !== "") && (
                     <button
@@ -254,7 +256,7 @@ const JoinRoom = () => {
 
 const ShareRoom = () => {
     const roomID = useParams().roomID as string;
-    
+
     const { handleCreateRoom, isCreating } = useRoom();
     const { setPreference } = useInviteStore();
 

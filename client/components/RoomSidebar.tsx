@@ -4,6 +4,8 @@ import useWindowSize from "@/utils/useWindowSize";
 import { useSidebarStore } from "@/store";
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { MdEdit } from "react-icons/md"
+import { ChangeName } from './Input';
 
 interface RoomSidebarProps {
     socketRef: React.MutableRefObject<Socket | null>;
@@ -13,9 +15,8 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const roomID = useParams().roomID as string;
 
     const { width, height } = useWindowSize();
-    const { players, setPlayers, assignedPlayerName } = useSidebarStore();
+    const { players, setPlayers, assignedPlayerName, setAssignedPlayerName } = useSidebarStore();
     const [tab, setTab] = useState(0);
-    const [word, setWord] = useState('');
     const [guessLength, setGuessLength] = useState<number>(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
@@ -24,6 +25,12 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
     const [timeLeft, setTimeLeft] = useState(60);
     const timerIntervalRef = useRef<number | NodeJS.Timeout>();
+
+    const [isEditing, setIsEditing] = useState(false);
+
+    const handleEditClick = () => {
+        setIsEditing(true);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const value = e.target.value.toUpperCase();
@@ -42,13 +49,6 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         if (e.key === 'Backspace' && guess[index] === '' && index > 0) {
             inputRefs.current[index - 1]?.focus();
         }
-    };
-
-    const handleSubmitWord = () => {
-        if (word.length < 1) return toast.warning('Enter the drawing subject');
-        const playerName = localStorage.getItem('playerName');
-        socketRef.current?.emit('submit-word', { roomID, playerName, word });
-        setWord('');
     };
 
     const handleSubmitGuess = () => {
@@ -114,6 +114,25 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             setTimeLeft(timeLeft);
         });
 
+        socket?.on('player-name-changed', ({ oldName, newName }: { oldName: string, newName: string }) => {
+            setPlayers((prevPlayers: string[]) => {
+                return prevPlayers.map((player: string) => (player === oldName ? newName : player));
+            });
+            setLeaderboard((prevLeaderboard: { [key: string]: number }) => {
+                const newLeaderboard = { ...prevLeaderboard };
+                const score = newLeaderboard[oldName];
+                delete newLeaderboard[oldName];
+                newLeaderboard[newName] = score;
+                return newLeaderboard;
+            });
+            const currentName = localStorage.getItem('playerName');
+            if (currentName === oldName) {
+                setAssignedPlayerName(newName);
+                localStorage.setItem('playerName', newName);
+            }
+            if (isPrompted === oldName) setIsPrompted(newName);
+        });
+
         return () => {
             clearInterval(timerIntervalRef.current);
             socket?.off('prompt-word-entry');
@@ -124,6 +143,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             socket?.off('player-left');
             socket?.off('time-up');
             socket?.off('timer-update');
+            socket?.off('player-name-changed');
         };
     }, []);
 
@@ -152,7 +172,6 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                                     onChange={(e) => handleChange(e, index)}
                                                     onKeyDown={(e) => handleKeyDown(e, index)}
                                                     maxLength={1}
-                                                    autoFocus={index === 0}
                                                 />
                                             ))}
                                         </div>
@@ -170,15 +189,20 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 ) : tab === 1 && (
                     <div className='p-2 md:p-5'>
                         {players.length > 0 && (
-                            <div>
-                                <h2 className='text-center font-semibold text-2xl mb-4'>Players</h2>
-                                {Object.entries(leaderboard).map(([player, points]) => (
-                                    <div key={player} className='flex items-center justify-between mb-2'>
-                                        <span className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</span>
-                                        <span className='text-gray-500'>Score: {points}</span>
+                            Object.entries(leaderboard).map(([player, points]) => (
+                                <div key={player} className='flex items-center justify-between mb-2'>
+                                    <div className='flex items-center gap-2'>
+                                        <p className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</p>
+                                        {player === assignedPlayerName && (
+                                            <>
+                                                <button onClick={() => setIsEditing(!isEditing)}><MdEdit size={20} /></button>
+                                                {isEditing && <ChangeName socketRef={socketRef} setIsEditing={setIsEditing} />}
+                                            </>
+                                        )}
                                     </div>
-                                ))}
-                            </div>
+                                    <p className='text-gray-500'>Score: {points}</p>
+                                </div>
+                            ))
                         )}
                     </div>
                 )
