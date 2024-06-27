@@ -21,7 +21,6 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
     const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
     const [isPrompted, setIsPrompted] = useState('');
-    const [isDrawer, setIsDrawer] = useState('');
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
     const [timeLeft, setTimeLeft] = useState(60);
     const timerIntervalRef = useRef<number | NodeJS.Timeout>();
@@ -63,39 +62,17 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
     useEffect(() => {
         const socket = socketRef.current;
 
-        const startTimer = () => {
-            clearInterval(timerIntervalRef.current);
-            setTimeLeft(60);
-            timerIntervalRef.current = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev === 1) {
-                        clearInterval(timerIntervalRef.current);
-                        return 60;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        };
-
-        const stopTimer = () => {
-            clearInterval(timerIntervalRef.current);
-            setTimeLeft(60);
-        };
-
         socket?.on('prompt-word-entry', (playerName: string) => {
             setIsPrompted(playerName);
             setIsGuessEntryEnabled(false);
-            setIsDrawer(playerName);
         });
 
         socket?.on('word-submitted', ({ playerName, wordLength }) => {
-            startTimer();
             setGuessLength(wordLength);
             setGuess(Array(wordLength).fill(''));
             const assignedName = localStorage.getItem('playerName');
             if (playerName === assignedName) toast.success(`You have submitted the word.`);
             else setIsGuessEntryEnabled(true);
-            setIsDrawer(playerName);
         });
 
         socket?.on('update-leaderboard', (updatedLeaderboard: { [key: string]: number }) => {
@@ -103,14 +80,13 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('correct-guess', ({ playerName, nextPlayer }: { playerName: string, nextPlayer: string }) => {
-            stopTimer();
             if (localStorage.getItem('playerName') === playerName) {
                 setIsGuessEntryEnabled(false);
                 toast.success('You guessed the correct word');
+            } else {
+                toast.success(`${playerName.split('#')[0]} guessed the correct word`);
             }
-            else toast.success(`${playerName.split('#')[0]} guessed the correct word`);
             setIsPrompted(nextPlayer);
-            setIsDrawer(nextPlayer);
         });
 
         socket?.on('wrong-guess', () => {
@@ -118,7 +94,6 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('player-left', ({ playerName, players }) => {
-            if (players.length < 2) stopTimer();
             setPlayers(players || []);
             setLeaderboard(prev => {
                 const newLeaderboard = { ...prev };
@@ -135,6 +110,10 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             }
         });
 
+        socket?.on('timer-update', (timeLeft: number) => {
+            setTimeLeft(timeLeft);
+        });
+
         return () => {
             clearInterval(timerIntervalRef.current);
             socket?.off('prompt-word-entry');
@@ -144,6 +123,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             socket?.off('wrong-guess');
             socket?.off('player-left');
             socket?.off('time-up');
+            socket?.off('timer-update');
         };
     }, []);
 
@@ -159,7 +139,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                     players.length < 2 ? <p className='p-2 md:p-5'>Waiting for at least 2 players...</p> : (
                         <>
                             <div className='p-2 md:p-5'>
-                                <p className='font-bold text-center mb-4'>Time Left: {timeLeft} seconds</p>
+                                <p className='font-bold text-center mb-4'>Time Left: {timeLeft}</p>
                                 {isGuessEntryEnabled ? (
                                     <div className='w-full flex flex-col gap-2 justify-between'>
                                         <div className='w-full flex flex-wrap gap-2 items-center'>
@@ -171,8 +151,8 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                                     value={digit}
                                                     onChange={(e) => handleChange(e, index)}
                                                     onKeyDown={(e) => handleKeyDown(e, index)}
-                                                    type="text"
                                                     maxLength={1}
+                                                    autoFocus={index === 0}
                                                 />
                                             ))}
                                         </div>
