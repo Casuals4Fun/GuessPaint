@@ -1,14 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { toast } from 'sonner';
-import useWindowSize from '@/utils/useWindowSize';
-import { useDraw } from '@/hooks/useDraw';
-import { useSidebarStore, useToolbarStore } from '@/store';
-import { drawLine } from '@/utils/drawLine';
-import { connectSocket } from '@/utils/connectSocket';
-import RoomToolbar from './RoomToolbar';
-import RoomSidebar from './RoomSidebar';
-import { DrawingSubject } from './Input';
+import React, { useEffect, useRef, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { toast } from 'sonner'
+import useWindowSize from '@/utils/useWindowSize'
+import { useDraw } from '@/hooks/useDraw'
+import { useSidebarStore, useToolbarStore } from '@/store'
+import { drawLine } from '@/utils/drawLine'
+import { connectSocket } from '@/utils/connectSocket'
+import RoomToolbar from './RoomToolbar'
+import RoomSidebar from './RoomSidebar'
+import { DrawingSubject } from './Input'
 
 const RoomCanvas: React.FC = () => {
     const roomID = useParams().roomID as string;

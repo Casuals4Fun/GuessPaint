@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 const usePlayerName = () => {
     const [playerName, setPlayerName] = useState<string | null>(null);

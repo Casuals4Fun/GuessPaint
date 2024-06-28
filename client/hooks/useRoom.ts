@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useInviteStore } from '@/store';
-import { toast } from 'sonner';
+import { toast } from 'sonner'
+import { useInviteStore } from '@/store'
 
 interface UseCreateRoomReturn {
     handleRandomRoom: () => Promise<void>;

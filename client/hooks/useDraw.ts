@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react'
 
 export const useDraw = (onDraw: ({ ctx, currPoint, prevPoint }: Draw) => void) => {
     const [mouseDown, setMouseDown] = useState(false);

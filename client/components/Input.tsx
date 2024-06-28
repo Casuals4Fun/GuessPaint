@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { Socket } from "socket.io-client";
-import { toast } from "sonner";
-import { useSidebarStore } from "@/store";
+import { useState } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import { Socket } from 'socket.io-client'
+import { toast } from 'sonner'
+import { useSidebarStore } from '@/store'
 
 interface SubjectProps {
     socketRef: React.MutableRefObject<Socket | null>
@@ -37,10 +37,10 @@ const DrawingSubject: React.FC<SubjectProps> = ({ socketRef, exit }) => {
                         onChange={e => setWord(e.target.value)}
                     />
                     <div className='flex justify-between items-center'>
-                        <Link href='/' onClick={exit} className='py-2 rounded underline active:scale-[0.8] duration-200'>
+                        <Link href='/' onClick={exit} className='py-2 rounded underline active:scale-90 duration-200'>
                             Leave Room
                         </Link>
-                        <button className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-[0.8] duration-200'>
+                        <button className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'>
                             Proceed
                         </button>
                     </div>
@@ -96,13 +96,13 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
                     </div>
                     <div className='flex justify-between items-center'>
                         <button
-                            className='py-2 rounded underline active:scale-[0.8] duration-200'
+                            className='py-2 rounded underline active:scale-90 duration-200'
                             onClick={() => setIsEditing(false)}
                         >
                             Close
                         </button>
                         <button
-                            className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-[0.8] duration-200'
+                            className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'
                             onClick={handleSaveClick}
                         >
                             Proceed

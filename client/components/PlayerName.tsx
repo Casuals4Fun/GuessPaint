@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { toast } from "sonner";
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface PlayerNameProps {
     onSavePlayerName: (name: string) => void;
@@ -10,7 +10,8 @@ const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
 
     const handlePlayerName = () => {
         if (!name.trim()) return toast.warning("Enter your name to proceed");
-        onSavePlayerName(name);
+        if (name.trim().length > 20) return toast.warning("Maximum 20 characters allowed");
+        onSavePlayerName(name.trim());
     };
 
     return (
@@ -30,7 +31,7 @@ const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
                     </div>
                     <div className='flex justify-end items-center'>
                         <button
-                            className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-[0.8] duration-200'
+                            className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'
                             onClick={handlePlayerName}
                         >
                             Proceed
