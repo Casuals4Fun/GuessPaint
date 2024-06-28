@@ -102,6 +102,13 @@ io.on('connection', socket => {
         socket.broadcast.to(roomID).emit('new-player', playerName);
         socket.emit('players-in-room', roomPlayers[roomID]);
 
+        if (votes[roomID]) {
+            for (const player in votes[roomID]) {
+                votes[roomID][player].required = roomPlayers[roomID].length - 1;
+                io.to(roomID).emit('vote-progress', { player, votes: votes[roomID][player].count });
+            }
+        }
+
         if (roomPlayers[roomID].length >= 2) {
             io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
         }
