@@ -301,7 +301,7 @@ const ShareRoom = () => {
                     </div>
                     <div className='w-full min-h-[42px] flex border border-gray-300 rounded-md pl-2 overflow-hidden'>
                         <div className='w-[90%] min-h-full text-ellipsis overflow-hidden border-r border-gray-300 py-2'>
-                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL?.split('http://' || 'https://')[1]}/room/${roomID}`}
+                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL?.split(/https?:\/\//)[1]}/room/${roomID}`}
                         </div>
                         <button
                             title={`${hasCopied ? "Copied" : "Copy URL"}`}
