@@ -18,7 +18,6 @@ const RoomCanvas: React.FC = () => {
     const { players, setPlayers, addPlayer, setAssignedPlayerName } = useSidebarStore();
 
     const socketRef = useRef(connectSocket());
-    const setupCompleted = useRef(false);
     const joinedRoomRef = useRef(false);
     const [canDraw, setCanDraw] = useState(false);
     const [isWordEntryEnabled, setIsWordEntryEnabled] = useState(false);
@@ -34,8 +33,6 @@ const RoomCanvas: React.FC = () => {
 
     useEffect(() => {
         let cleanupFunction = () => { };
-
-        if (setupCompleted.current) return;
 
         const ctx = canvasRef.current?.getContext('2d');
 
@@ -120,8 +117,6 @@ const RoomCanvas: React.FC = () => {
             socketRef.current.emit('clear');
         });
 
-        setupCompleted.current = true;
-
         cleanupFunction = () => {
             socketRef.current.off('join-room');
             socketRef.current.off('assign-player-name');
@@ -137,7 +132,6 @@ const RoomCanvas: React.FC = () => {
             socketRef.current.off('word-submitted');
             socketRef.current.off('correct-guess');
             socketRef.current.off('time-up');
-            setupCompleted.current = false;
         };
 
         return cleanupFunction;
