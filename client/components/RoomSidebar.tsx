@@ -106,11 +106,12 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             });
         });
 
-        socket?.on('time-up', ({ currentPlayer }: { currentPlayer: string }) => {
+        socket?.on('time-up', ({ currentPlayer, drawingWord }: { currentPlayer: string, drawingWord: string }) => {
             if (localStorage.getItem('playerName') === currentPlayer) {
                 toast.error('Time is up! Next player\'s turn.');
             } else {
-                toast.error(`${currentPlayer.split('#')[0]}'s time is up!`);
+                if (drawingWord) toast.success(`The drawing was: ${drawingWord.toUpperCase()}`);
+                else toast.error(`${currentPlayer.split('#')[0]}'s time is up!`);
             }
         });
 

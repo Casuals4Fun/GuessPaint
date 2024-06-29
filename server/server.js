@@ -48,11 +48,15 @@ const startTurnTimer = (roomID) => {
         if (timeLeft <= 0) {
             clearInterval(countdownIntervals[roomID]);
             const currentPlayer = roomPlayers[roomID][currentPlayerIndex[roomID]];
+            const drawingWord = drawingWords[roomID];
+
             io.to(roomID).emit('timer-update', 0);
-            io.to(roomID).emit('time-up', { currentPlayer });
+            io.to(roomID).emit('time-up', { currentPlayer, drawingWord });
 
             currentPlayerIndex[roomID] = (currentPlayerIndex[roomID] + 1) % roomPlayers[roomID].length;
             io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
+
+            delete drawingWords[roomID];
         }
     }, 1000);
 };
