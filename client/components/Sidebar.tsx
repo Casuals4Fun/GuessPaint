@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import useWindowSize from '@/utils/useWindowSize'
 import { useSidebarStore } from '@/store'
 import Leaderboard from './Leaderboard'
+import Chat from './Chat'
 
 interface SidebarProps {
     socketRef: React.MutableRefObject<Socket | null>;
@@ -186,42 +187,41 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
         <div className={`absolute z-[0] ${width < 768 ? "h-[250px]" : `h-[${height - 54}px]`} md:right-0 md:top-[54px] bottom-0 md:max-w-[400px] lg:max-w-[450px] w-[100%] bg-gray-300 border-l border-gray-400 overflow-auto`}>
             <div className='sticky top-0 grid grid-cols-2 border-y border-gray-400'>
                 <button className={`${tab === 0 ? "bg-gray-400" : "bg-gray-300"} py-2 font-semibold text-xl text-center`} onClick={() => setTab(0)}>Guess</button>
-                <button className={`${tab === 1 ? "bg-gray-400" : "bg-gray-300"} py-2 font-semibold text-xl text-center`} onClick={() => setTab(1)}>Players</button>
+                <button className={`${tab === 1 ? "bg-gray-400" : "bg-gray-300"} py-2 font-semibold text-xl text-center`} onClick={() => setTab(1)}>Chat</button>
             </div>
 
-            {tab === 0 ?
-                (players.length === 0 ? <p className='p-2 md:p-5'>No players in the room</p> :
-                    players.length < 2 ? <p className='p-2 md:p-5'>Waiting for at least 2 players...</p> : (
+            <div className='p-2 py-5 md:p-5'>
+                {tab === 0 ? (players.length === 0 ? <p className='p-2 md:p-5'>No players in the room</p> :
+                    players.length < 2 ? <p>Waiting for at least 2 players...</p> : (
                         <>
-                            <div className='min-h-[64px] p-2 md:p-5'>
-                                {isGuessEntryEnabled ? (
-                                    <div className='w-full flex flex-col gap-2 justify-between'>
-                                        <div className='w-full flex flex-wrap gap-2 items-center'>
-                                            {guess.map((digit, index) => (
-                                                <input
-                                                    key={index}
-                                                    ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
-                                                    className='w-10 h-10 border border-gray-400 rounded text-center outline-none'
-                                                    value={digit}
-                                                    onChange={(e) => handleChange(e, index)}
-                                                    onKeyDown={(e) => handleKeyDown(e, index)}
-                                                    maxLength={1}
-                                                />
-                                            ))}
-                                        </div>
-                                        <button
-                                            onClick={handleSubmitGuess}
-                                            className="w-fit bg-black text-white py-2 px-4 rounded active:scale-90 duration-200"
-                                        >
-                                            Submit Guess
-                                        </button>
+                            {isGuessEntryEnabled ? (
+                                <div className='pb-5 w-full flex flex-col gap-2 justify-between'>
+                                    <div className='w-full flex flex-wrap gap-2 items-center'>
+                                        {guess.map((digit, index) => (
+                                            <input
+                                                key={index}
+                                                ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
+                                                className='w-10 h-10 border border-gray-400 rounded text-center outline-none'
+                                                value={digit}
+                                                onChange={(e) => handleChange(e, index)}
+                                                onKeyDown={(e) => handleKeyDown(e, index)}
+                                                maxLength={1}
+                                            />
+                                        ))}
                                     </div>
-                                ) : isPrompted !== assignedPlayerName && <p>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
-                            </div>
+                                    <button
+                                        onClick={handleSubmitGuess}
+                                        className="w-fit bg-black text-white py-2 px-4 rounded active:scale-90 duration-200"
+                                    >
+                                        Submit Guess
+                                    </button>
+                                </div>
+                            ) : isPrompted !== assignedPlayerName && <p className='pb-5'>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
+                            <Leaderboard socketRef={socketRef} leaderboard={leaderboard} setLeaderboard={setLeaderboard} votes={votes} />
                         </>
                     )
-                ) : tab === 1 && <Leaderboard socketRef={socketRef} leaderboard={leaderboard} setLeaderboard={setLeaderboard} votes={votes} />
-            }
+                ) : tab === 1 && <Chat socketRef={socketRef} />}
+            </div>
         </div>
     );
 };
