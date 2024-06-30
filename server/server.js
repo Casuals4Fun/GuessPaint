@@ -213,6 +213,11 @@ io.on('connection', socket => {
         }
     });
 
+    socket.on('send-chat-message', ({ playerName, message }) => {
+        const roomID = rooms[socket.id];
+        io.to(roomID).emit('chat-message', { playerName, message });
+    });
+
     socket.on('initiate-vote-kick', ({ roomID, player, voter }) => {
         if (!roomPlayers[roomID] || !roomPlayers[roomID].includes(player)) return;
 
