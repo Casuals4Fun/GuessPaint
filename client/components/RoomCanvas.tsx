@@ -15,7 +15,7 @@ const RoomCanvas: React.FC = () => {
 
     const { width, height } = useWindowSize();
     const { brushThickness, color } = useToolbarStore();
-    const { players, setPlayers, addPlayer, setAssignedPlayerName } = useSidebarStore();
+    const { players, setPlayers, addPlayer } = useSidebarStore();
 
     const socketRef = useRef(connectSocket());
     const joinedRoomRef = useRef(false);
@@ -47,11 +47,6 @@ const RoomCanvas: React.FC = () => {
             joinedRoomRef.current = true;
         }
 
-        socket.on('assign-player-name', (assignedName: string) => {
-            setAssignedPlayerName(assignedName);
-            localStorage.setItem('playerName', assignedName);
-        });
-
         socket.on('players-in-room', (players: string[]) => {
             setPlayers(players);
         });
@@ -64,7 +59,7 @@ const RoomCanvas: React.FC = () => {
         });
 
         socket.on('player-left', ({ playerName, players }) => {
-            if (playerName === localStorage.getItem('playerName')) toast.success("Room left");
+            if (playerName === useSidebarStore.getState().assignedPlayerName) toast.success("Room left");
             else toast.error(`${playerName.split('#')[0]} left`);
 
             if (players && players.length < 2) {
@@ -98,13 +93,12 @@ const RoomCanvas: React.FC = () => {
         socket.on('clear', clear);
 
         socket.on('prompt-word-entry', (playerName: string) => {
-            const currentPlayerName = localStorage.getItem('playerName');
-            setIsWordEntryEnabled(currentPlayerName === playerName);
+            setIsWordEntryEnabled(playerName === useSidebarStore.getState().assignedPlayerName);
         });
 
         socket.on('word-submitted', ({ playerName }) => {
             setIsWordEntryEnabled(false);
-            setCanDraw(playerName === localStorage.getItem('playerName'));
+            setCanDraw(playerName === useSidebarStore.getState().assignedPlayerName);
         });
 
         socket.on('correct-guess', () => {

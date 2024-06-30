@@ -2,7 +2,7 @@
 
 // import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import usePlayerName from '@/hooks/usePlayerName'
-import PlayerName from '@/components/PlayerName'
+import { PlayerName } from '@/components/Input';
 import Invite from '@/components/Invite'
 
 const Room = () => {

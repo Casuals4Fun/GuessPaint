@@ -5,9 +5,9 @@ import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import usePlayerName from '@/hooks/usePlayerName'
 import { useInviteStore } from '@/store'
+import { PlayerName } from '@/components/Input'
 import RoomCanvas from '@/components/RoomCanvas'
 import Invite from '@/components/Invite'
-import PlayerName from '@/components/PlayerName'
 
 const InviteRoom = () => {
     const roomID = useParams().roomID as string;

@@ -18,22 +18,21 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
 
     const { width, height } = useWindowSize();
     const { players, setPlayers, assignedPlayerName, setAssignedPlayerName } = useSidebarStore();
-    const [tab, setTab] = useState(0);
-    const [guessLength, setGuessLength] = useState<number>(0);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
-    const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
-    const [isPrompted, setIsPrompted] = useState('');
-    const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
-    const [timeLeft, setTimeLeft] = useState(60);
-    const timerIntervalRef = useRef<number | NodeJS.Timeout>();
 
+    const [tab, setTab] = useState(0);
+    const [timeLeft, setTimeLeft] = useState(60);
+    const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
+    const [isPrompted, setIsPrompted] = useState('');
+    const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [guessLength, setGuessLength] = useState<number>(0);
+    const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
     const [isEditing, setIsEditing] = useState(false);
     const [votes, setVotes] = useState<{ [key: string]: number }>({});
 
     const handleKickVote = (player: string) => {
         const socket = socketRef.current;
-        socket?.emit('initiate-vote-kick', { roomID, player, voter: localStorage.getItem('playerName') });
+        socket?.emit('initiate-vote-kick', { roomID, player, voter: assignedPlayerName });
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -57,14 +56,18 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
 
     const handleSubmitGuess = () => {
         if (guess.join('').length < guessLength) return toast.warning('Guess the drawing subject');
-        const playerName = localStorage.getItem('playerName');
-        socketRef.current?.emit('guess-word', { roomID, playerName, guess: guess.join('') });
+        socketRef.current?.emit('guess-word', { roomID, playerName: assignedPlayerName, guess: guess.join('') });
         setGuess(Array(guessLength).fill(''));
         inputRefs.current[0]?.focus();
     };
 
     useEffect(() => {
         const socket = socketRef.current;
+
+        socket?.on('assign-player-name', (assignedName: string) => {
+            setAssignedPlayerName(assignedName);
+            localStorage.setItem('playerName', assignedName);
+        });
 
         socket?.on('prompt-word-entry', (playerName: string) => {
             setIsPrompted(playerName);
@@ -74,8 +77,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         socket?.on('word-submitted', ({ playerName, wordLength }) => {
             setGuessLength(wordLength);
             setGuess(Array(wordLength).fill(''));
-            const assignedName = localStorage.getItem('playerName');
-            if (playerName === assignedName) toast.success(`You have submitted the word.`);
+            if (playerName === useSidebarStore.getState().assignedPlayerName) toast.success(`You have submitted the word.`);
             else setIsGuessEntryEnabled(true);
         });
 
@@ -84,7 +86,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('correct-guess', ({ playerName, nextPlayer }: { playerName: string, nextPlayer: string }) => {
-            if (localStorage.getItem('playerName') === playerName) {
+            if (useSidebarStore.getState().assignedPlayerName === playerName) {
                 setIsGuessEntryEnabled(false);
                 toast.success('You guessed the correct word');
             } else {
@@ -107,7 +109,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('time-up', ({ currentPlayer, drawingWord }: { currentPlayer: string, drawingWord: string }) => {
-            if (localStorage.getItem('playerName') === currentPlayer) {
+            if (useSidebarStore.getState().assignedPlayerName === currentPlayer) {
                 toast.error('Time is up! Next player\'s turn.');
             } else {
                 if (drawingWord) toast.success(`The drawing was: ${drawingWord.toUpperCase()}`);
@@ -130,8 +132,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 newLeaderboard[newName] = score;
                 return newLeaderboard;
             });
-            const currentName = localStorage.getItem('playerName');
-            if (currentName === oldName) {
+            if (useSidebarStore.getState().assignedPlayerName === oldName) {
                 setAssignedPlayerName(newName);
                 localStorage.setItem('playerName', newName);
             }
@@ -139,10 +140,10 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('vote-initiated', ({ player, voter }) => {
-            if (voter === localStorage.getItem('playerName')) {
+            if (voter === useSidebarStore.getState().assignedPlayerName) {
                 toast.success(`You have voted to kick ${player.split('#')[0]}`);
             } else {
-                toast.success(`${voter.split('#')[0]} has voted to kick ${player === localStorage.getItem('playerName') ? 'you' : player.split('#')[0]}`);
+                toast.success(`${voter.split('#')[0]} has voted to kick ${player === useSidebarStore.getState().assignedPlayerName ? 'you' : player.split('#')[0]}`);
             }
         });
 
@@ -156,7 +157,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 delete newVotes[player];
                 return newVotes;
             });
-            if (player === localStorage.getItem('playerName')) {
+            if (player === useSidebarStore.getState().assignedPlayerName) {
                 socket?.emit('leave-room');
                 router.push('/', { shallow: true } as any);
                 toast.error('You have been kicked from the room');
@@ -166,7 +167,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         return () => {
-            clearInterval(timerIntervalRef.current);
+            socket?.off('assign-player-name');
             socket?.off('prompt-word-entry');
             socket?.off('word-submitted');
             socket?.off('update-leaderboard');
