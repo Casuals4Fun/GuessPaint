@@ -26,6 +26,6 @@ export const useSidebarStore = create<SidebarState>((set) => ({
     players: [],
     setPlayers: (players) => set((state) => ({ players: typeof players === 'function' ? players(state.players) : players })),
     addPlayer: (player: string) => set((state) => ({ players: [...state.players, player] })),
-    assignedPlayerName: '',
+    assignedPlayerName: "",
     setAssignedPlayerName: (playerName: string) => set({ assignedPlayerName: playerName }),
 }));

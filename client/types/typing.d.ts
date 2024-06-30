@@ -25,14 +25,6 @@ type ToolbarState = {
     setOpenCanvasBg: Dispatch<SetStateAction<boolean>>
 };
 
-type SidebarState = {
-    players: string[];
-    setPlayers: (players: string[] | ((prevPlayers: string[]) => string[])) => void;
-    addPlayer: (player: string) => void;
-    assignedPlayerName: string;
-    setAssignedPlayerName: (playerName: string) => void;
-};
-
 type InviteState = {
     roomType: string,
     setRoomType: Dispatch<SetStateAction<string>>,
@@ -40,4 +32,12 @@ type InviteState = {
     setInvite: Dispatch<SetStateAction<boolean>>,
     preference: string, 
     setPreference: Dispatch<SetStateAction<string>>
+};
+
+type SidebarState = {
+    players: string[];
+    setPlayers: (players: string[] | ((prevPlayers: string[]) => string[])) => void;
+    addPlayer: (player: string) => void;
+    assignedPlayerName: string;
+    setAssignedPlayerName: Dispatch<SetStateAction<string>>;
 };

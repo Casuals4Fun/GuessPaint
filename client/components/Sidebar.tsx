@@ -4,37 +4,27 @@ import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import useWindowSize from '@/utils/useWindowSize'
 import { useSidebarStore } from '@/store'
-import { MdEdit, MdRemoveCircleOutline } from 'react-icons/md'
-import { IoPerson } from 'react-icons/io5'
-import { ChangeName } from './Input'
+import Leaderboard from './Leaderboard'
 
-interface RoomSidebarProps {
+interface SidebarProps {
     socketRef: React.MutableRefObject<Socket | null>;
 }
 
-const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
+const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
     const roomID = useParams().roomID as string;
     const router = useRouter();
 
     const { width, height } = useWindowSize();
     const { players, setPlayers, assignedPlayerName, setAssignedPlayerName } = useSidebarStore();
+
     const [tab, setTab] = useState(0);
-    const [guessLength, setGuessLength] = useState<number>(0);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
-    const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
-    const [isPrompted, setIsPrompted] = useState('');
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
-    const [timeLeft, setTimeLeft] = useState(60);
-    const timerIntervalRef = useRef<number | NodeJS.Timeout>();
-
-    const [isEditing, setIsEditing] = useState(false);
+    const [isPrompted, setIsPrompted] = useState('');
+    const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [guessLength, setGuessLength] = useState<number>(0);
+    const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
     const [votes, setVotes] = useState<{ [key: string]: number }>({});
-
-    const handleKickVote = (player: string) => {
-        const socket = socketRef.current;
-        socket?.emit('initiate-vote-kick', { roomID, player, voter: localStorage.getItem('playerName') });
-    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const value = e.target.value.toUpperCase();
@@ -57,14 +47,18 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
 
     const handleSubmitGuess = () => {
         if (guess.join('').length < guessLength) return toast.warning('Guess the drawing subject');
-        const playerName = localStorage.getItem('playerName');
-        socketRef.current?.emit('guess-word', { roomID, playerName, guess: guess.join('') });
+        socketRef.current?.emit('guess-word', { roomID, playerName: assignedPlayerName, guess: guess.join('') });
         setGuess(Array(guessLength).fill(''));
         inputRefs.current[0]?.focus();
     };
 
     useEffect(() => {
         const socket = socketRef.current;
+
+        socket?.on('assign-player-name', (assignedName: string) => {
+            setAssignedPlayerName(assignedName);
+            localStorage.setItem('playerName', assignedName);
+        });
 
         socket?.on('prompt-word-entry', (playerName: string) => {
             setIsPrompted(playerName);
@@ -74,8 +68,9 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         socket?.on('word-submitted', ({ playerName, wordLength }) => {
             setGuessLength(wordLength);
             setGuess(Array(wordLength).fill(''));
-            const assignedName = localStorage.getItem('playerName');
-            if (playerName === assignedName) toast.success(`You have submitted the word.`);
+            if (playerName === useSidebarStore.getState().assignedPlayerName) {
+                toast.success(`You have submitted the word.`);
+            }
             else setIsGuessEntryEnabled(true);
         });
 
@@ -84,13 +79,13 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('correct-guess', ({ playerName, nextPlayer }: { playerName: string, nextPlayer: string }) => {
-            if (localStorage.getItem('playerName') === playerName) {
+            if (useSidebarStore.getState().assignedPlayerName === playerName) {
                 setIsGuessEntryEnabled(false);
                 toast.success('You guessed the correct word');
-            } else {
-                toast.success(`${playerName.split('#')[0]} guessed the correct word`);
             }
+            else toast.success(`${playerName.split('#')[0]} guessed the correct word`);
             setIsPrompted(nextPlayer);
+            setGuessLength(0);
         });
 
         socket?.on('wrong-guess', () => {
@@ -104,19 +99,18 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 delete newLeaderboard[playerName];
                 return newLeaderboard;
             });
+            setGuessLength(0);
         });
 
         socket?.on('time-up', ({ currentPlayer, drawingWord }: { currentPlayer: string, drawingWord: string }) => {
-            if (localStorage.getItem('playerName') === currentPlayer) {
+            if (useSidebarStore.getState().assignedPlayerName === currentPlayer) {
                 toast.error('Time is up! Next player\'s turn.');
-            } else {
+            }
+            else {
                 if (drawingWord) toast.success(`The drawing was: ${drawingWord.toUpperCase()}`);
                 else toast.error(`${currentPlayer.split('#')[0]}'s time is up!`);
             }
-        });
-
-        socket?.on('timer-update', (timeLeft: number) => {
-            setTimeLeft(timeLeft);
+            setGuessLength(0);
         });
 
         socket?.on('player-name-changed', ({ oldName, newName }: { oldName: string, newName: string }) => {
@@ -130,8 +124,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 newLeaderboard[newName] = score;
                 return newLeaderboard;
             });
-            const currentName = localStorage.getItem('playerName');
-            if (currentName === oldName) {
+            if (useSidebarStore.getState().assignedPlayerName === oldName) {
                 setAssignedPlayerName(newName);
                 localStorage.setItem('playerName', newName);
             }
@@ -139,10 +132,11 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
         });
 
         socket?.on('vote-initiated', ({ player, voter }) => {
-            if (voter === localStorage.getItem('playerName')) {
+            if (voter === useSidebarStore.getState().assignedPlayerName) {
                 toast.success(`You have voted to kick ${player.split('#')[0]}`);
-            } else {
-                toast.success(`${voter.split('#')[0]} has voted to kick ${player === localStorage.getItem('playerName') ? 'you' : player.split('#')[0]}`);
+            }
+            else {
+                toast.success(`${voter.split('#')[0]} has voted to kick ${player === useSidebarStore.getState().assignedPlayerName ? 'you' : player.split('#')[0]}`);
             }
         });
 
@@ -156,17 +150,19 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 delete newVotes[player];
                 return newVotes;
             });
-            if (player === localStorage.getItem('playerName')) {
+            if (player === useSidebarStore.getState().assignedPlayerName) {
                 socket?.emit('leave-room');
                 router.push('/', { shallow: true } as any);
                 toast.error('You have been kicked from the room');
-            } else {
+            }
+            else {
                 toast.success(`${player.split('#')[0]} has been kicked from the room.`);
             }
+            setGuessLength(0);
         });
 
         return () => {
-            clearInterval(timerIntervalRef.current);
+            socket?.off('assign-player-name');
             socket?.off('prompt-word-entry');
             socket?.off('word-submitted');
             socket?.off('update-leaderboard');
@@ -174,12 +170,12 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
             socket?.off('wrong-guess');
             socket?.off('player-left');
             socket?.off('time-up');
-            socket?.off('timer-update');
             socket?.off('player-name-changed');
             socket?.off('vote-initiated');
             socket?.off('vote-progress');
             socket?.off('player-kicked');
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -193,8 +189,7 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                 (players.length === 0 ? <p className='p-2 md:p-5'>No players in the room</p> :
                     players.length < 2 ? <p className='p-2 md:p-5'>Waiting for at least 2 players...</p> : (
                         <>
-                            <div className='p-2 md:p-5'>
-                                <p className='font-bold text-center mb-4'>Time Left: {timeLeft}</p>
+                            <div className='min-h-[64px] p-2 md:p-5'>
                                 {isGuessEntryEnabled ? (
                                     <div className='w-full flex flex-col gap-2 justify-between'>
                                         <div className='w-full flex flex-wrap gap-2 items-center'>
@@ -217,54 +212,14 @@ const RoomSidebar: React.FC<RoomSidebarProps> = ({ socketRef }) => {
                                             Submit Guess
                                         </button>
                                     </div>
-                                ) : isPrompted !== assignedPlayerName && <p>Waiting for {isPrompted.split('#')[0]} to submit the word...</p>}
+                                ) : isPrompted !== assignedPlayerName && <p>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
                             </div>
                         </>
                     )
-                ) : tab === 1 && (
-                    <div className='p-2 md:p-5'>
-                        {players.length > 0 && (
-                            Object.entries(leaderboard).map(([player, points]) => (
-                                <div key={player} className='flex items-center justify-between mb-2'>
-                                    <div className='flex items-center gap-2'>
-                                        <p className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</p>
-                                        {player === assignedPlayerName ? (
-                                            <>
-                                                <button onClick={() => setIsEditing(!isEditing)}><MdEdit size={20} /></button>
-                                                {isEditing && <ChangeName socketRef={socketRef} setIsEditing={setIsEditing} />}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button title='Vote Kick' onClick={() => handleKickVote(player)} className='flex items-center gap-1'>
-                                                    <MdRemoveCircleOutline size={20} />
-                                                </button>
-                                                {votes[player] ? (
-                                                    <span className='flex items-center'>
-                                                        {Array(votes[player])
-                                                            .fill(null)
-                                                            .map((_, index) => (
-                                                                <IoPerson key={`current-vote-${index}`} size={15} />
-                                                            ))}
-                                                        /
-                                                        {Array(players.length - 1)
-                                                            .fill(null)
-                                                            .map((_, index) => (
-                                                                <IoPerson key={`total-vote-${index}`} size={15} />
-                                                            ))}
-                                                    </span>
-                                                ) : null}
-                                            </>
-                                        )}
-                                    </div>
-                                    <p className='text-gray-500'>Score: {points}</p>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                )
+                ) : tab === 1 && <Leaderboard socketRef={socketRef} leaderboard={leaderboard} votes={votes} />
             }
         </div>
     );
 };
 
-export default React.memo(RoomSidebar);
+export default Sidebar;

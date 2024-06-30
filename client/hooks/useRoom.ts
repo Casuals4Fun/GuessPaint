@@ -28,10 +28,10 @@ export const useRoom = (): UseCreateRoomReturn => {
 
             if (data.success) {
                 setRoomType("Join");
-                router.push(`/room/${data.roomID}`, { shallow: true } as any);
+                router.push(`/${data.roomID}`, { shallow: true } as any);
             } else {
                 setRoomType("Create");
-                router.push(`/room/${data.roomID}`, { shallow: true } as any);
+                router.push(`/${data.roomID}`, { shallow: true } as any);
             }
         } catch (error) {
             setIsPlaying(false);
@@ -50,7 +50,7 @@ export const useRoom = (): UseCreateRoomReturn => {
 
             setRoomType("Create");
 
-            router.push(`/room/${roomID}`, { shallow: true } as any);
+            router.push(`/${roomID}`, { shallow: true } as any);
         } catch (error) {
             setIsCreating(false);
             console.error('Error creating room:', error);
@@ -68,7 +68,7 @@ export const useRoom = (): UseCreateRoomReturn => {
 
             if (data.success) {
                 setRoomType("Join");
-                router.push(`/room/${roomID}`, { shallow: true } as any);
+                router.push(`/${roomID}`, { shallow: true } as any);
             } else {
                 setIsJoining(false);
                 toast.error('No room found');
