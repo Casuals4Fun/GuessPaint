@@ -7,10 +7,9 @@ import { useSidebarStore } from '@/store'
 
 interface SubjectProps {
     socketRef: React.MutableRefObject<Socket | null>
-    exit: () => void
 }
 
-const DrawingSubject: React.FC<SubjectProps> = ({ socketRef, exit }) => {
+const DrawingSubject: React.FC<SubjectProps> = ({ socketRef }) => {
     const roomID = useParams().roomID as string;
     const [word, setWord] = useState("");
 
@@ -37,7 +36,7 @@ const DrawingSubject: React.FC<SubjectProps> = ({ socketRef, exit }) => {
                         onChange={e => setWord(e.target.value)}
                     />
                     <div className='flex justify-between items-center'>
-                        <Link href='/' onClick={exit} className='py-2 rounded underline active:scale-90 duration-200'>
+                        <Link href='/' onClick={() => socketRef.current?.emit('leave-room')} className='py-2 rounded underline active:scale-90 duration-200'>
                             Leave Room
                         </Link>
                         <button className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'>

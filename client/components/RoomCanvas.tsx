@@ -31,55 +31,57 @@ const RoomCanvas: React.FC = () => {
         }
     }
 
-    useEffect(() => {
-        let cleanupFunction = () => { };
+    const handleClear = () => {
+        clear();
+        socketRef.current.emit('clear');
+    }
 
+    useEffect(() => {
+        const socket = socketRef.current;
         const ctx = canvasRef.current?.getContext('2d');
 
         if (!joinedRoomRef.current) {
             if (typeof window !== 'undefined') {
-                socketRef.current.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
-
-                socketRef.current.on('assign-player-name', (assignedName: string) => {
-                    setAssignedPlayerName(assignedName);
-                    localStorage.setItem('playerName', assignedName);
-                });
+                socket.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
             }
-
             joinedRoomRef.current = true;
         }
 
-        socketRef.current.on('players-in-room', (players: string[]) => {
+        socket.on('assign-player-name', (assignedName: string) => {
+            setAssignedPlayerName(assignedName);
+            localStorage.setItem('playerName', assignedName);
+        });
+
+        socket.on('players-in-room', (players: string[]) => {
             setPlayers(players);
         });
 
-        socketRef.current.on('new-player', (playerName: string) => {
+        socket.on('new-player', (playerName: string) => {
             if (!players.includes(playerName)) {
                 addPlayer(playerName);
                 toast.success(`${playerName.split('#')[0]} joined`);
             }
         });
 
-        socketRef.current.on('player-left', ({ playerName, players }) => {
+        socket.on('player-left', ({ playerName, players }) => {
             if (playerName === localStorage.getItem('playerName')) toast.success("Room left");
             else toast.error(`${playerName.split('#')[0]} left`);
 
             if (players && players.length < 2) {
                 setIsWordEntryEnabled(false);
                 setCanDraw(false);
-                clear();
-                socketRef.current.emit('clear');
+                handleClear();
             }
         });
 
-        socketRef.current.emit('client-ready');
+        socket.emit('client-ready');
 
-        socketRef.current.on('get-canvas-state', () => {
+        socket.on('get-canvas-state', () => {
             if (!canvasRef.current?.toDataURL()) return;
-            socketRef.current.emit('canvas-state', canvasRef.current.toDataURL());
+            socket.emit('canvas-state', canvasRef.current.toDataURL());
         });
 
-        socketRef.current.on('canvas-state-from-server', (state: string) => {
+        socket.on('canvas-state-from-server', (state: string) => {
             const image = new Image();
             image.src = state;
             image.onload = () => {
@@ -87,64 +89,57 @@ const RoomCanvas: React.FC = () => {
             };
         });
 
-        socketRef.current.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }: DrawLineProps) => {
+        socket.on('draw-line', ({ prevPoint, currPoint, color, brushThickness }: DrawLineProps) => {
             if (ctx) {
                 drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
             }
         });
 
-        socketRef.current.on('clear', clear);
+        socket.on('clear', clear);
 
-        socketRef.current.on('prompt-word-entry', (playerName: string) => {
+        socket.on('prompt-word-entry', (playerName: string) => {
             const currentPlayerName = localStorage.getItem('playerName');
             setIsWordEntryEnabled(currentPlayerName === playerName);
         });
 
-        socketRef.current.on('word-submitted', ({ playerName, wordLength }) => {
+        socket.on('word-submitted', ({ playerName }) => {
             setIsWordEntryEnabled(false);
             setCanDraw(playerName === localStorage.getItem('playerName'));
         });
 
-        socketRef.current.on('correct-guess', () => {
+        socket.on('correct-guess', () => {
             setCanDraw(false);
-            clear();
-            socketRef.current.emit('clear');
+            handleClear();
         });
 
-        socketRef.current.on('time-up', () => {
+        socket.on('time-up', () => {
             setCanDraw(false);
-            clear();
-            socketRef.current.emit('clear');
+            handleClear();
         });
 
-        cleanupFunction = () => {
-            socketRef.current.off('join-room');
-            socketRef.current.off('assign-player-name');
-            socketRef.current.off('players-in-room');
-            socketRef.current.off('new-player');
-            socketRef.current.off('player-left');
-            socketRef.current.off('client-ready')
-            socketRef.current.off('get-canvas-state');
-            socketRef.current.off('canvas-state-from-server');
-            socketRef.current.off('draw-line');
-            socketRef.current.off('clear');
-            socketRef.current.off('prompt-word-entry');
-            socketRef.current.off('word-submitted');
-            socketRef.current.off('correct-guess');
-            socketRef.current.off('time-up');
+        return () => {
+            socket.off('join-room');
+            socket.off('assign-player-name');
+            socket.off('players-in-room');
+            socket.off('new-player');
+            socket.off('player-left');
+            socket.off('client-ready')
+            socket.off('get-canvas-state');
+            socket.off('canvas-state-from-server');
+            socket.off('draw-line');
+            socket.off('clear');
+            socket.off('prompt-word-entry');
+            socket.off('word-submitted');
+            socket.off('correct-guess');
+            socket.off('time-up');
         };
-
-        return cleanupFunction;
     }, []);
 
     return (
         <div className='relative'>
             <RoomToolbar
                 canDraw={canDraw}
-                clear={() => {
-                    clear();
-                    socketRef.current.emit('clear');
-                }}
+                clear={handleClear}
                 exit={() => socketRef.current.emit('leave-room')}
             />
 
@@ -163,12 +158,7 @@ const RoomCanvas: React.FC = () => {
 
             <RoomSidebar socketRef={socketRef} />
 
-            {isWordEntryEnabled && (
-                <DrawingSubject
-                    socketRef={socketRef}
-                    exit={() => socketRef.current.emit('leave-room')}
-                />
-            )}
+            {isWordEntryEnabled && <DrawingSubject socketRef={socketRef} />}
         </div>
     );
 };
