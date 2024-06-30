@@ -37,8 +37,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
                     axis='y'
                     values={Object.entries(leaderboard)}
                     onReorder={handleReorder}
+                    className='flex flex-col gap-2 md:gap-5'
                 >
-                    {Object.entries(leaderboard).map(([player, points]) => (
+                    {Object.entries(leaderboard).map(([player, points], index) => (
                         <Reorder.Item
                             as='div'
                             key={player}
@@ -46,7 +47,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
                         >
                             <div className='flex items-center justify-between mb-2'>
                                 <div className='flex items-center gap-2'>
-                                    <p className='font-medium'>{player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</p>
+                                    <div className='flex items-center gap-1'>
+                                        {
+                                            index + 1 === 1 ? <img src='/first.svg' className='size-[25px]' alt='first' />
+                                                : index + 1 === 2 ? <img src='/second.svg' className='size-[25px]' alt='second' />
+                                                    : index + 1 === 3 && <img src='/third.svg' className='size-[25px]' alt='third' />
+                                        }
+                                        <p className='font-medium'>{index + 1 > 3 && `${index + 1}.`} {player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</p>
+                                    </div>
                                     {player === assignedPlayerName ? (
                                         <>
                                             <button onClick={() => setIsEditing(!isEditing)}><MdEdit size={20} /></button>
@@ -75,7 +83,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
                                         </>
                                     )}
                                 </div>
-                                <p className='text-gray-500'>Score: {points}</p>
+                                <p className='text-gray-500'>Score: <span className='text-black font-semibold'>{points}</span></p>
                             </div>
                         </Reorder.Item>
                     ))}
