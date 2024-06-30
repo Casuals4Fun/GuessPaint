@@ -171,7 +171,7 @@ const JoinRoom = () => {
 
             if (data.success) {
                 setInvite(false);
-                router.push(`/room/${roomID}`, { shallow: true } as any);
+                router.push(`/${roomID}`, { shallow: true } as any);
             } else {
                 toast.error('No room found');
                 if (isInputJoin) {
@@ -282,7 +282,7 @@ const ShareRoom = () => {
                         <Image
                             width={150}
                             height={150}
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`}
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_FRONTEND_URL}/${roomID}`}
                             className='absolute z-[1] top-0 left-0 object-contain'
                             alt="Share QR"
                         />
@@ -301,7 +301,7 @@ const ShareRoom = () => {
                     </div>
                     <div className='w-full min-h-[42px] flex border border-gray-300 rounded-md pl-2 overflow-hidden'>
                         <div className='w-[90%] min-h-full text-ellipsis overflow-hidden border-r border-gray-300 py-2'>
-                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL?.split(/https?:\/\//)[1]}/room/${roomID}`}
+                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL?.split(/https?:\/\//)[1]}/${roomID}`}
                         </div>
                         <button
                             title={`${hasCopied ? "Copied" : "Copy URL"}`}

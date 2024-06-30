@@ -6,11 +6,11 @@ import { useDraw } from '@/hooks/useDraw'
 import { useSidebarStore, useToolbarStore } from '@/store'
 import { drawLine } from '@/utils/drawLine'
 import { connectSocket } from '@/utils/connectSocket'
-import RoomToolbar from './RoomToolbar'
-import RoomSidebar from './RoomSidebar'
+import Sidebar from './Sidebar'
+import Toolbar from './Toolbar'
 import { DrawingSubject } from './Input'
 
-const RoomCanvas: React.FC = () => {
+const Canvas: React.FC = () => {
     const roomID = useParams().roomID as string;
 
     const { width, height } = useWindowSize();
@@ -23,17 +23,11 @@ const RoomCanvas: React.FC = () => {
     const [isWordEntryEnabled, setIsWordEntryEnabled] = useState(false);
 
     const { canvasRef, onMouseDown, clear } = useDraw(createLine);
-
     function createLine({ prevPoint, currPoint, ctx }: Draw) {
         if (canDraw) {
             socketRef.current.emit('draw-line', { prevPoint, currPoint, color, brushThickness });
             drawLine({ prevPoint, currPoint, ctx, color, brushThickness });
         }
-    }
-
-    const handleClear = () => {
-        clear();
-        socketRef.current.emit('clear');
     }
 
     useEffect(() => {
@@ -65,7 +59,7 @@ const RoomCanvas: React.FC = () => {
             if (players && players.length < 2) {
                 setIsWordEntryEnabled(false);
                 setCanDraw(false);
-                handleClear();
+                socketRef.current.emit('clear');
             }
         });
 
@@ -103,12 +97,12 @@ const RoomCanvas: React.FC = () => {
 
         socket.on('correct-guess', () => {
             setCanDraw(false);
-            handleClear();
+            socketRef.current.emit('clear');
         });
 
         socket.on('time-up', () => {
             setCanDraw(false);
-            handleClear();
+            socketRef.current.emit('clear');
         });
 
         return () => {
@@ -127,14 +121,15 @@ const RoomCanvas: React.FC = () => {
             socket.off('correct-guess');
             socket.off('time-up');
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
         <div className='relative'>
-            <RoomToolbar
+            <Toolbar
+                socketRef={socketRef}
                 canDraw={canDraw}
-                clear={handleClear}
-                exit={() => socketRef.current.emit('leave-room')}
+                clear={() => socketRef.current.emit('clear')}
             />
 
             <canvas
@@ -150,11 +145,11 @@ const RoomCanvas: React.FC = () => {
                 className={`bg-white ${!canDraw ? '!cursor-not-allowed' : ''}`}
             />
 
-            <RoomSidebar socketRef={socketRef} />
+            <Sidebar socketRef={socketRef} />
 
             {isWordEntryEnabled && <DrawingSubject socketRef={socketRef} />}
         </div>
     );
 };
 
-export default React.memo(RoomCanvas);
+export default Canvas;

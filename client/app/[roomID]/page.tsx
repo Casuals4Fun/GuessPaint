@@ -6,10 +6,10 @@ import { toast } from 'sonner'
 import usePlayerName from '@/hooks/usePlayerName'
 import { useInviteStore } from '@/store'
 import { PlayerName } from '@/components/Input'
-import RoomCanvas from '@/components/RoomCanvas'
+import Canvas from '@/components/Canvas'
 import Invite from '@/components/Invite'
 
-const InviteRoom = () => {
+const Room = () => {
     const roomID = useParams().roomID as string;
 
     const { playerName, savePlayerName, loading } = usePlayerName();
@@ -26,15 +26,16 @@ const InviteRoom = () => {
             toast.success("Room joined");
             setInvite(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     if (loading) return null;
     return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : (
         <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
-            {roomID && <RoomCanvas />}
+            {roomID && <Canvas />}
             {invite && <Invite />}
         </div>
     )
 };
 
-export default React.memo(InviteRoom);
+export default Room;
