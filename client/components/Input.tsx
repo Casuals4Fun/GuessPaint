@@ -113,14 +113,14 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
             }) => {
                 if (response.success) {
                     localStorage.setItem('playerName', `${newName}#${socketRef.current?.id}`);
-                    toast.success('Name changed successfully!');
+                    toast.success('Name changed successfully');
                 } else {
                     toast.error(response.message);
                 }
                 setIsEditing(false);
             });
         } else {
-            toast.error('Name cannot be empty!');
+            toast.warning('Name cannot be empty');
         }
     };
 

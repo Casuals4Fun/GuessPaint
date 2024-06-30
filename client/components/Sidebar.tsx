@@ -65,17 +65,23 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
             setIsGuessEntryEnabled(false);
         });
 
-        socket?.on('word-submitted', ({ playerName, wordLength }) => {
+        socket?.on('word-submitted', ({ playerName, wordLength }: { playerName: string, wordLength: number }) => {
             setGuessLength(wordLength);
             setGuess(Array(wordLength).fill(''));
             if (playerName === useSidebarStore.getState().assignedPlayerName) {
-                toast.success(`You have submitted the word.`);
+                toast.success('You have submitted the word');
             }
-            else setIsGuessEntryEnabled(true);
+            else {
+                setIsGuessEntryEnabled(true);
+                toast.success(`${playerName.split('#')[0]} has submitted the word`);
+            }
         });
 
         socket?.on('update-leaderboard', (updatedLeaderboard: { [key: string]: number }) => {
-            setLeaderboard(updatedLeaderboard);
+            const sortedLeaderboard = Object.fromEntries(
+                Object.entries(updatedLeaderboard).sort(([, pointsA], [, pointsB]) => pointsB - pointsA)
+            );
+            setLeaderboard(sortedLeaderboard);
         });
 
         socket?.on('correct-guess', ({ playerName, nextPlayer }: { playerName: string, nextPlayer: string }) => {
@@ -155,9 +161,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
                 router.push('/', { shallow: true } as any);
                 toast.error('You have been kicked from the room');
             }
-            else {
-                toast.success(`${player.split('#')[0]} has been kicked from the room.`);
-            }
+            else toast.success(`${player.split('#')[0]} has been kicked from the room`);
             setGuessLength(0);
         });
 
@@ -216,7 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
                             </div>
                         </>
                     )
-                ) : tab === 1 && <Leaderboard socketRef={socketRef} leaderboard={leaderboard} votes={votes} />
+                ) : tab === 1 && <Leaderboard socketRef={socketRef} leaderboard={leaderboard} setLeaderboard={setLeaderboard} votes={votes} />
             }
         </div>
     );
