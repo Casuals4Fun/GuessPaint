@@ -17,8 +17,7 @@ const Toolbar = ({ socketRef, canDraw, clear }: ToolbarProps) => {
     const { setInvite } = useInviteStore();
     const {
         colorPicker, setColorPicker,
-        color, setColor,
-        brushEdit, setBrushEdit
+        color, setColor
     } = useToolbarStore();
 
     const [timeLeft, setTimeLeft] = useState(60);
@@ -49,7 +48,6 @@ const Toolbar = ({ socketRef, canDraw, clear }: ToolbarProps) => {
                                 title='Color Picker'
                                 onClick={() => {
                                     setColorPicker(!colorPicker);
-                                    setBrushEdit(false);
                                 }}
                                 className='bg-white active:scale-90 duration-200 rounded-full p-2'
                             >
@@ -68,7 +66,6 @@ const Toolbar = ({ socketRef, canDraw, clear }: ToolbarProps) => {
                             onClick={() => {
                                 clear();
                                 setColorPicker(false);
-                                setBrushEdit(false);
                             }}
                             className='bg-white active:scale-90 duration-200 rounded-full p-2'
                         >

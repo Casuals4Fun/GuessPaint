@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Socket } from 'socket.io-client'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import useWindowSize from '@/utils/useWindowSize'
 import { useSidebarStore } from '@/store'
@@ -12,7 +12,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
-    const roomID = useParams().roomID as string;
     const router = useRouter();
 
     const { width, height } = useWindowSize();
@@ -49,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
 
     const handleSubmitGuess = () => {
         if (guess.join('').length < guessLength) return toast.warning('Guess the drawing subject');
-        socketRef.current?.emit('guess-word', { roomID, playerName: assignedPlayerName, guess: guess.join('') });
+        socketRef.current?.emit('guess-word', { playerName: assignedPlayerName, guess: guess.join('') });
         setGuess(Array(guessLength).fill(''));
         inputRefs.current[0]?.focus();
     };

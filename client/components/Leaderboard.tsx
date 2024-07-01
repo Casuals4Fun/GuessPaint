@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import { Socket } from 'socket.io-client'
 import { useSidebarStore } from '@/store'
 import { MdEdit, MdRemoveCircleOutline } from 'react-icons/md'
@@ -16,13 +15,12 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLeaderboard, votes }) => {
-    const roomID = useParams().roomID as string;
     const { players, assignedPlayerName } = useSidebarStore();
     const [isEditing, setIsEditing] = useState(false);
 
     const handleKickVote = (player: string) => {
         const socket = socketRef.current;
-        socket?.emit('initiate-vote-kick', { roomID, player, voter: assignedPlayerName });
+        socket?.emit('initiate-vote-kick', { player, voter: assignedPlayerName });
     };
 
     const handleReorder = (newOrder: [string, number][]) => {

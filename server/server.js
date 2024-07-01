@@ -72,21 +72,6 @@ io.on('connection', socket => {
     socket.on('join-room', ({ roomID, playerName }) => {
         const uniquePlayerName = `${playerName.split('#')[0]}#${socket.id}`;
 
-        if (rooms[socket.id]) {
-            const oldRoomID = rooms[socket.id];
-            const oldRoomPlayers = roomPlayers[oldRoomID];
-
-            if (oldRoomPlayers) {
-                const playerIndex = oldRoomPlayers.indexOf(uniquePlayerName);
-                if (playerIndex !== -1) {
-                    oldRoomPlayers.splice(playerIndex, 1);
-                    if (oldRoomPlayers.length === 0) {
-                        delete roomPlayers[oldRoomID];
-                    }
-                }
-            }
-        }
-
         socket.join(roomID);
         rooms[socket.id] = roomID;
 
@@ -120,16 +105,16 @@ io.on('connection', socket => {
         io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
     });
 
-    socket.on('submit-word', ({ roomID, playerName, word }) => {
+    socket.on('submit-word', ({ playerName, word }) => {
+        const roomID = rooms[socket.id];
         drawingWords[roomID] = word;
         io.to(roomID).emit('word-submitted', { playerName: playerName, wordLength: word.length });
 
-        if (roomPlayers[roomID].length >= 0) {
-            startTurnTimer(roomID);
-        }
+        if (roomPlayers[roomID].length >= 0) startTurnTimer(roomID);
     });
 
-    socket.on('guess-word', ({ roomID, playerName, guess }) => {
+    socket.on('guess-word', ({ playerName, guess }) => {
+        const roomID = rooms[socket.id];
         if (drawingWords[roomID] && drawingWords[roomID].toLowerCase() === guess.toLowerCase()) {
             const numPlayers = roomPlayers[roomID].length;
             const correctGuesses = roomPlayers[roomID].filter(player => player !== roomPlayers[roomID][currentPlayerIndex[roomID]] && player !== playerName).length;
@@ -150,25 +135,18 @@ io.on('connection', socket => {
         }
     });
 
-    socket.on('change-name', ({ roomID, oldName, newName }, callback) => {
-        if (!roomID || !oldName || !newName) {
-            return callback({ success: false, message: 'Invalid data' });
-        }
+    socket.on('change-name', ({ oldName, newName }, callback) => {
+        const roomID = rooms[socket.id];
+        if (!oldName || !newName) return callback({ success: false, message: 'Invalid data' });
 
         const playersInRoom = roomPlayers[roomID];
-        if (!playersInRoom) {
-            return callback({ success: false, message: 'Room not found' });
-        }
+        if (!playersInRoom) return callback({ success: false, message: 'Room not found' });
 
         const playerIndex = playersInRoom.indexOf(oldName);
-        if (playerIndex === -1) {
-            return callback({ success: false, message: 'Old name not found in room' });
-        }
+        if (playerIndex === -1) return callback({ success: false, message: 'Old name not found in room' });
 
         const newNameWithID = `${newName}#${socket.id}`;
-        if (playersInRoom.includes(newNameWithID)) {
-            return callback({ success: false, message: 'Name already taken' });
-        }
+        if (playersInRoom.includes(newNameWithID)) return callback({ success: false, message: 'Name already taken' });
 
         playersInRoom[playerIndex] = newNameWithID;
 
@@ -218,7 +196,8 @@ io.on('connection', socket => {
         io.to(roomID).emit('chat-message', { playerName, message });
     });
 
-    socket.on('initiate-vote-kick', ({ roomID, player, voter }) => {
+    socket.on('initiate-vote-kick', ({ player, voter }) => {
+        const roomID = rooms[socket.id];
         if (!roomPlayers[roomID] || !roomPlayers[roomID].includes(player)) return;
 
         const numPlayers = roomPlayers[roomID].length;

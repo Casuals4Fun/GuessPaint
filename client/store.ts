@@ -8,9 +8,7 @@ export const useToolbarStore = create<ToolbarState>((set) => ({
     brushEdit: false,
     setBrushEdit: (brushEdit: boolean) => set({ brushEdit: brushEdit }),
     brushThickness: 5,
-    setBrushThickness: (brushThickness: number) => set({ brushThickness: brushThickness }),
-    openCanvasBg: false,
-    setOpenCanvasBg: (openCanvasBg: boolean) => set({ openCanvasBg: openCanvasBg })
+    setBrushThickness: (brushThickness: number) => set({ brushThickness: brushThickness })
 }));
 
 export const useInviteStore = create<InviteState>((set) => ({
