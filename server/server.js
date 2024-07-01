@@ -154,7 +154,7 @@ io.on('connection', socket => {
         delete leaderboards[roomID][oldName];
         leaderboards[roomID][newNameWithID] = score;
 
-        io.to(roomID).emit('player-name-changed', { oldName, newName: newNameWithID });
+        io.to(roomID).emit('player-name-changed', { oldName, newName: newNameWithID, promptedPlayer: roomPlayers[roomID][currentPlayerIndex[roomID]] });
 
         rooms[socket.id] = roomID;
 
