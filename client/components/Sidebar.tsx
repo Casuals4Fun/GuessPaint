@@ -120,22 +120,21 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
             setGuessLength(0);
         });
 
-        socket?.on('player-name-changed', ({ oldName, newName }: { oldName: string, newName: string }) => {
-            setPlayers((prevPlayers: string[]) => {
-                return prevPlayers.map((player: string) => (player === oldName ? newName : player));
+        socket?.on('player-name-changed', ({ oldName, newName, promptedPlayer }: { oldName: string, newName: string, promptedPlayer: string }) => {
+            setPlayers((prevPlayers: string[]) => prevPlayers.map((player: string) => (player === oldName ? newName : player)));
+
+            setLeaderboard(prevLeaderboard => {
+                const { [oldName]: score, ...rest } = prevLeaderboard;
+                return { ...rest, [newName]: score };
             });
-            setLeaderboard((prevLeaderboard: { [key: string]: number }) => {
-                const newLeaderboard = { ...prevLeaderboard };
-                const score = newLeaderboard[oldName];
-                delete newLeaderboard[oldName];
-                newLeaderboard[newName] = score;
-                return newLeaderboard;
-            });
+
+            setMessages((prevMessages) => prevMessages.map((msg) => msg.playerName === oldName ? { ...msg, playerName: newName } : msg));
+
             if (useSidebarStore.getState().assignedPlayerName === oldName) {
                 setAssignedPlayerName(newName);
                 localStorage.setItem('playerName', newName);
             }
-            if (isPrompted === oldName) setIsPrompted(newName);
+            setIsPrompted(promptedPlayer);
         });
 
         socket?.on('vote-initiated', ({ player, voter }) => {
@@ -187,6 +186,8 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // console.log({ isPrompted, assignedPlayerName });
 
     return (
         <div className={`absolute z-[0] ${width < 768 ? "h-[250px]" : `h-[${height - 54}px]`} md:right-0 md:top-[54px] bottom-0 md:max-w-[400px] lg:max-w-[450px] w-[100%] bg-gray-300 border-l border-gray-400 overflow-auto`}>
