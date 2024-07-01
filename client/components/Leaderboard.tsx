@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import { Socket } from 'socket.io-client'
 import { useSidebarStore } from '@/store'
 import { MdEdit, MdRemoveCircleOutline } from 'react-icons/md'
 import { IoPerson } from 'react-icons/io5'
 import { Reorder } from 'framer-motion'
 import { ChangeName } from './Input'
+import Image from 'next/image'
 
 interface LeaderboardProps {
     socketRef: React.MutableRefObject<Socket | null>;
@@ -15,13 +15,12 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLeaderboard, votes }) => {
-    const roomID = useParams().roomID as string;
     const { players, assignedPlayerName } = useSidebarStore();
     const [isEditing, setIsEditing] = useState(false);
 
     const handleKickVote = (player: string) => {
         const socket = socketRef.current;
-        socket?.emit('initiate-vote-kick', { roomID, player, voter: assignedPlayerName });
+        socket?.emit('initiate-vote-kick', { player, voter: assignedPlayerName });
     };
 
     const handleReorder = (newOrder: [string, number][]) => {
@@ -30,14 +29,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
     };
 
     return (
-        <div className='p-2 md:p-5'>
+        <div className='m-2 my-5 md:m-5'>
             {players.length > 0 && (
                 <Reorder.Group
                     as='div'
                     axis='y'
                     values={Object.entries(leaderboard)}
                     onReorder={handleReorder}
-                    className='flex flex-col gap-2 md:gap-5'
+                    className='flex flex-col gap-5'
                 >
                     {Object.entries(leaderboard).map(([player, points], index) => (
                         <Reorder.Item
@@ -45,13 +44,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
                             key={player}
                             value={[player, points]}
                         >
-                            <div className='flex items-center justify-between mb-2'>
+                            <div className='flex items-center justify-between'>
                                 <div className='flex items-center gap-2'>
                                     <div className='flex items-center gap-1'>
                                         {
-                                            index + 1 === 1 ? <img src='/first.svg' className='size-[25px]' alt='first' />
-                                                : index + 1 === 2 ? <img src='/second.svg' className='size-[25px]' alt='second' />
-                                                    : index + 1 === 3 && <img src='/third.svg' className='size-[25px]' alt='third' />
+                                            index + 1 === 1 ? <Image src='/first.svg' width={25} height={25} alt='first' />
+                                                : index + 1 === 2 ? <Image src='/second.svg' width={25} height={25} alt='second' />
+                                                    : index + 1 === 3 && <Image src='/third.svg' width={25} height={25} alt='third' />
                                         }
                                         <p className='font-medium'>{index + 1 > 3 && `${index + 1}.`} {player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</p>
                                     </div>

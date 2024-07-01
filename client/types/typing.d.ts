@@ -20,9 +20,7 @@ type ToolbarState = {
     brushEdit: boolean,
     setBrushEdit: Dispatch<SetStateAction<boolean>>,
     brushThickness: number,
-    setBrushThickness: Dispatch<SetStateAction<number>>,
-    openCanvasBg: boolean,
-    setOpenCanvasBg: Dispatch<SetStateAction<boolean>>
+    setBrushThickness: Dispatch<SetStateAction<number>>
 };
 
 type InviteState = {

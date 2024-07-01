@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
@@ -54,7 +53,6 @@ interface SubjectProps {
 }
 
 const DrawingSubject: React.FC<SubjectProps> = ({ socketRef }) => {
-    const roomID = useParams().roomID as string;
     const [word, setWord] = useState("");
 
     const { assignedPlayerName } = useSidebarStore();
@@ -63,7 +61,7 @@ const DrawingSubject: React.FC<SubjectProps> = ({ socketRef }) => {
         e.preventDefault();
 
         if (word.trim().length < 1) return toast.warning('Enter the drawing subject');
-        socketRef.current?.emit('submit-word', { roomID, playerName: assignedPlayerName, word: word.trim() });
+        socketRef.current?.emit('submit-word', { playerName: assignedPlayerName, word: word.trim() });
         setWord('');
     };
 
@@ -100,14 +98,12 @@ interface NameProps {
 }
 
 const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
-    const roomID = useParams().roomID as string;
-
     const { assignedPlayerName } = useSidebarStore();
     const [newName, setNewName] = useState(assignedPlayerName.split('#')[0] || '');
 
     const handleSaveClick = () => {
         if (newName.trim() !== '') {
-            socketRef.current?.emit('change-name', { roomID, oldName: assignedPlayerName, newName }, (response: {
+            socketRef.current?.emit('change-name', { oldName: assignedPlayerName, newName }, (response: {
                 success: boolean;
                 message?: string;
             }) => {

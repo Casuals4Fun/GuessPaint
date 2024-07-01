@@ -257,18 +257,15 @@ const ShareRoom = () => {
 
     const [hasCopied, setHasCopied] = useState<boolean>(false);
     const copyToClipboard = async () => {
-        const url = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/room/${roomID}`;
         if (!hasCopied) {
             try {
-                await navigator.clipboard.writeText(url);
+                await navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/${roomID}`);
                 setHasCopied(true);
                 toast.success("Copied");
             } catch (err) {
                 console.error('Failed to copy URL: ', err);
             }
-        } else {
-            toast("Already Copied!");
-        }
+        } else toast("Already Copied!");
     };
 
     return (

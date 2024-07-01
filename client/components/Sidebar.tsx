@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Socket } from 'socket.io-client'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import useWindowSize from '@/utils/useWindowSize'
 import { useSidebarStore } from '@/store'
 import Leaderboard from './Leaderboard'
+import Chat from './Chat'
 
 interface SidebarProps {
     socketRef: React.MutableRefObject<Socket | null>;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
-    const roomID = useParams().roomID as string;
     const router = useRouter();
 
     const { width, height } = useWindowSize();
@@ -19,6 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
 
     const [tab, setTab] = useState(0);
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
+    const [messages, setMessages] = useState<{ playerName: string, message: string }[]>([]);
     const [isPrompted, setIsPrompted] = useState('');
     const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -47,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
 
     const handleSubmitGuess = () => {
         if (guess.join('').length < guessLength) return toast.warning('Guess the drawing subject');
-        socketRef.current?.emit('guess-word', { roomID, playerName: assignedPlayerName, guess: guess.join('') });
+        socketRef.current?.emit('guess-word', { playerName: assignedPlayerName, guess: guess.join('') });
         setGuess(Array(guessLength).fill(''));
         inputRefs.current[0]?.focus();
     };
@@ -165,6 +166,10 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
             setGuessLength(0);
         });
 
+        socket?.on('chat-message', (messageData: { playerName: string, message: string }) => {
+            setMessages(prevMessages => [...prevMessages, messageData]);
+        });
+
         return () => {
             socket?.off('assign-player-name');
             socket?.off('prompt-word-entry');
@@ -178,6 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
             socket?.off('vote-initiated');
             socket?.off('vote-progress');
             socket?.off('player-kicked');
+            socket?.off('chat-message');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -186,16 +192,18 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
         <div className={`absolute z-[0] ${width < 768 ? "h-[250px]" : `h-[${height - 54}px]`} md:right-0 md:top-[54px] bottom-0 md:max-w-[400px] lg:max-w-[450px] w-[100%] bg-gray-300 border-l border-gray-400 overflow-auto`}>
             <div className='sticky top-0 grid grid-cols-2 border-y border-gray-400'>
                 <button className={`${tab === 0 ? "bg-gray-400" : "bg-gray-300"} py-2 font-semibold text-xl text-center`} onClick={() => setTab(0)}>Guess</button>
-                <button className={`${tab === 1 ? "bg-gray-400" : "bg-gray-300"} py-2 font-semibold text-xl text-center`} onClick={() => setTab(1)}>Players</button>
+                <button className={`${tab === 1 ? "bg-gray-400" : "bg-gray-300"} py-2 font-semibold text-xl text-center relative`} onClick={() => setTab(1)}>
+                    <p>Chat<span className='absolute left-[60.5%] translate-x-[60.5%] bottom-[11px] text-sm text-gray-600'>{messages.length > 0 && messages.length}</span></p>
+                </button>
             </div>
 
-            {tab === 0 ?
-                (players.length === 0 ? <p className='p-2 md:p-5'>No players in the room</p> :
-                    players.length < 2 ? <p className='p-2 md:p-5'>Waiting for at least 2 players...</p> : (
-                        <>
-                            <div className='min-h-[64px] p-2 md:p-5'>
+            <div className='h-[calc(100%-46px)] overflow-hidden'>
+                <div className='h-full overflow-auto'>
+                    {tab === 0 ? (players.length === 0 ? <p className='m-2 my-5 md:m-5'>No players in the room</p> :
+                        players.length < 2 ? <p className='m-2 my-5 md:m-5'>Waiting for at least 2 players...</p> : (
+                            <>
                                 {isGuessEntryEnabled ? (
-                                    <div className='w-full flex flex-col gap-2 justify-between'>
+                                    <div className='m-2 my-5 md:m-5 w-full flex flex-col gap-2 justify-between'>
                                         <div className='w-full flex flex-wrap gap-2 items-center'>
                                             {guess.map((digit, index) => (
                                                 <input
@@ -216,12 +224,13 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
                                             Submit Guess
                                         </button>
                                     </div>
-                                ) : isPrompted !== assignedPlayerName && <p>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
-                            </div>
-                        </>
-                    )
-                ) : tab === 1 && <Leaderboard socketRef={socketRef} leaderboard={leaderboard} setLeaderboard={setLeaderboard} votes={votes} />
-            }
+                                ) : isPrompted !== assignedPlayerName && <p className='m-2 my-5 md:m-5'>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
+                                <Leaderboard socketRef={socketRef} leaderboard={leaderboard} setLeaderboard={setLeaderboard} votes={votes} />
+                            </>
+                        )
+                    ) : tab === 1 && <Chat socketRef={socketRef} messages={messages} />}
+                </div>
+            </div>
         </div>
     );
 };
