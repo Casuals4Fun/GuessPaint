@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
-import { useSidebarStore } from '@/store'
+import { useSidebarStore } from '../store'
 
 interface PlayerNameProps {
     onSavePlayerName: (name: string) => void;
@@ -79,7 +79,7 @@ const DrawingSubject: React.FC<SubjectProps> = ({ socketRef }) => {
                         onChange={e => setWord(e.target.value)}
                     />
                     <div className='flex justify-between items-center'>
-                        <Link href='/' onClick={() => socketRef.current?.emit('leave-room')} className='py-2 rounded underline active:scale-90 duration-200'>
+                        <Link to='/' onClick={() => socketRef.current?.emit('leave-room')} className='py-2 rounded underline active:scale-90 duration-200'>
                             Leave Room
                         </Link>
                         <button className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'>

@@ -1,7 +1,5 @@
-'use client'
-
 import { Toaster } from 'sonner'
-import useWindowSize from '@/utils/useWindowSize'
+import useWindowSize from '../utils/useWindowSize'
 
 const Toast = () => {
     const { width } = useWindowSize();

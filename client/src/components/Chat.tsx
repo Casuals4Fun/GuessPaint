@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Socket } from 'socket.io-client'
-import { useSidebarStore } from '@/store'
+import { useSidebarStore } from '../store'
 
 interface ChatProps {
     socketRef: React.MutableRefObject<Socket | null>;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useInviteStore, useToolbarStore } from '@/store'
+import { Link } from 'react-router-dom'
+import { useInviteStore, useToolbarStore } from '../store'
 import { HexColorPicker } from 'react-colorful'
 import { AiOutlineClose } from 'react-icons/ai'
 import { PiEraserFill, PiPaintBrushFill, PiShareNetworkFill } from 'react-icons/pi'
@@ -11,7 +11,7 @@ interface ToolbarProps {
     socketRef: React.MutableRefObject<Socket | null>;
     canDraw: boolean
     clear: () => void
-};
+}
 
 const Toolbar = ({ socketRef, canDraw, clear }: ToolbarProps) => {
     const { setInvite } = useInviteStore();
@@ -83,7 +83,7 @@ const Toolbar = ({ socketRef, canDraw, clear }: ToolbarProps) => {
                     >
                         <PiShareNetworkFill size={22} />
                     </button>
-                    <Link href='/' onClick={() => socketRef.current?.emit('leave-room')} className='size-[38px] grid place-items-center bg-white active:scale-90 duration-200 rounded-full'>
+                    <Link to='/' onClick={() => socketRef.current?.emit('leave-room')} className='size-[38px] grid place-items-center bg-white active:scale-90 duration-200 rounded-full'>
                         <RxExit size={20} />
                     </Link>
                 </div>

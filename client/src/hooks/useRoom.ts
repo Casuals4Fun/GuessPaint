@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useInviteStore } from '@/store'
+import { useInviteStore } from '../store'
 
 interface UseCreateRoomReturn {
     handleRandomRoom: () => Promise<void>;
@@ -13,7 +13,7 @@ interface UseCreateRoomReturn {
 }
 
 export const useRoom = (): UseCreateRoomReturn => {
-    const router = useRouter();
+    const navigate = useNavigate();
     const { setRoomType } = useInviteStore();
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [isCreating, setIsCreating] = useState<boolean>(false);
@@ -23,15 +23,15 @@ export const useRoom = (): UseCreateRoomReturn => {
         setIsPlaying(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/random-room`, { method: 'GET' });
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/random-room`, { method: 'GET' });
             const data = await response.json();
 
             if (data.success) {
                 setRoomType("Join");
-                router.push(`/${data.roomID}`, { shallow: true } as any);
+                navigate(`/${data.roomID}`);
             } else {
                 setRoomType("Create");
-                router.push(`/${data.roomID}`, { shallow: true } as any);
+                navigate(`/${data.roomID}`);
             }
         } catch (error) {
             setIsPlaying(false);
@@ -44,13 +44,13 @@ export const useRoom = (): UseCreateRoomReturn => {
         setIsCreating(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/create-room`, { method: 'GET' });
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/create-room`, { method: 'GET' });
             const data = await response.json();
             const roomID = data.roomID;
 
             setRoomType("Create");
 
-            router.push(`/${roomID}`, { shallow: true } as any);
+            navigate(`/${roomID}`);
         } catch (error) {
             setIsCreating(false);
             console.error('Error creating room:', error);
@@ -63,12 +63,12 @@ export const useRoom = (): UseCreateRoomReturn => {
         setIsJoining(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/join-room?roomID=${roomID}`, { method: 'GET' });
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/join-room?roomID=${roomID}`, { method: 'GET' });
             const data = await response.json();
 
             if (data.success) {
                 setRoomType("Join");
-                router.push(`/${roomID}`, { shallow: true } as any);
+                navigate(`/${roomID}`);
             } else {
                 setIsJoining(false);
                 toast.error('No room found');

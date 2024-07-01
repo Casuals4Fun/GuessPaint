@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { Socket } from 'socket.io-client'
-import { useSidebarStore } from '@/store'
+import { useSidebarStore } from '../store'
 import { MdEdit, MdRemoveCircleOutline } from 'react-icons/md'
 import { IoPerson } from 'react-icons/io5'
 import { Reorder } from 'framer-motion'
 import { ChangeName } from './Input'
-import Image from 'next/image'
 
 interface LeaderboardProps {
     socketRef: React.MutableRefObject<Socket | null>;
@@ -48,9 +47,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
                                 <div className='flex items-center gap-2'>
                                     <div className='flex items-center gap-1'>
                                         {
-                                            index + 1 === 1 ? <Image src='/first.svg' width={25} height={25} alt='first' />
-                                                : index + 1 === 2 ? <Image src='/second.svg' width={25} height={25} alt='second' />
-                                                    : index + 1 === 3 && <Image src='/third.svg' width={25} height={25} alt='third' />
+                                            index + 1 === 1 ? <img src='/first.svg' width={25} height={25} alt='first' />
+                                                : index + 1 === 2 ? <img src='/second.svg' width={25} height={25} alt='second' />
+                                                    : index + 1 === 3 && <img src='/third.svg' width={25} height={25} alt='third' />
                                         }
                                         <p className='font-medium'>{index + 1 > 3 && `${index + 1}.`} {player.split('#')[0]} {player === assignedPlayerName && "(Me)"}</p>
                                     </div>

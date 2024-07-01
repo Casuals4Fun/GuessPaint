@@ -93,7 +93,7 @@ export const useDraw = (onDraw: ({ ctx, currPoint, prevPoint }: Draw) => void) =
             window.removeEventListener('mouseup', handleEnd);
             window.removeEventListener('touchend', handleEnd);
         }
-    }, [onDraw]);
+    }, [mouseDown, onDraw]);
 
     return { canvasRef, onMouseDown, clear };
 };
