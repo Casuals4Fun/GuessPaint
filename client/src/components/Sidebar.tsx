@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Socket } from 'socket.io-client'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import useWindowSize from '@/utils/useWindowSize'
-import { useSidebarStore } from '@/store'
+import useWindowSize from '../utils/useWindowSize'
+import { useSidebarStore } from '../store'
 import Leaderboard from './Leaderboard'
 import Chat from './Chat'
 
@@ -12,7 +12,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
-    const router = useRouter();
+    const navigate = useNavigate();
 
     const { width, height } = useWindowSize();
     const { players, setPlayers, assignedPlayerName, setAssignedPlayerName } = useSidebarStore();
@@ -158,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
             });
             if (player === useSidebarStore.getState().assignedPlayerName) {
                 socket?.emit('leave-room');
-                router.push('/', { shallow: true } as any);
+                navigate('/');
                 toast.error('You have been kicked from the room');
             }
             else toast.success(`${player.split('#')[0]} has been kicked from the room`);

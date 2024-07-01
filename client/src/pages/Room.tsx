@@ -1,13 +1,11 @@
-'use client'
-
-import React, { useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import usePlayerName from '@/hooks/usePlayerName'
-import { useInviteStore } from '@/store'
-import { PlayerName } from '@/components/Input'
-import Canvas from '@/components/Canvas'
-import Invite from '@/components/Invite'
+import usePlayerName from '../hooks/usePlayerName'
+import { useInviteStore } from '../store'
+import { PlayerName } from '../components/Input'
+import Canvas from '../components/Canvas'
+import Invite from '../components/Invite'
 
 const Room = () => {
     const roomID = useParams().roomID as string;
@@ -38,4 +36,4 @@ const Room = () => {
     )
 };
 
-export default Room;
+export default Room

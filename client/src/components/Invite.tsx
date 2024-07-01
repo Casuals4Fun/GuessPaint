@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
-import { useParams, useRouter } from 'next/navigation'
-import { useInviteStore } from '@/store'
-import { useRoom } from '@/hooks/useRoom'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useInviteStore } from '../store'
+import { useRoom } from '../hooks/useRoom'
 import { toast } from 'sonner'
 import { BarLoader } from 'react-spinners'
 import { IoIosArrowBack } from 'react-icons/io'
@@ -13,7 +12,7 @@ import { GoPeople } from 'react-icons/go'
 import { BsFillClipboardCheckFill, BsFillClipboardFill } from 'react-icons/bs'
 
 const Invite = () => {
-    const roomID = useParams().roomID as string;
+    const { roomID } = useParams();
 
     const { invite, setInvite, preference, setPreference } = useInviteStore();
 
@@ -106,7 +105,7 @@ const JoinRoom = () => {
         isLoading: boolean;
     };
 
-    const router = useRouter();
+    const navigate = useNavigate();
     const { setInvite } = useInviteStore();
     const [isLoadingRooms, setIsLoadingRooms] = useState(false);
     const [isInputJoining, setIsInputJoining] = useState(false);
@@ -137,7 +136,7 @@ const JoinRoom = () => {
         const getAllRooms = async () => {
             setIsLoadingRooms(true);
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/list-rooms`, { method: 'GET' });
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/list-rooms`, { method: 'GET' });
                 const roomsData = await response.json();
                 const roomsWithLoading: Room[] = roomsData.map((room: { roomID: string, playerCount: number }) => ({
                     ...room,
@@ -166,12 +165,12 @@ const JoinRoom = () => {
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/join-room?roomID=${roomID}`, { method: 'GET' });
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/join-room?roomID=${roomID}`, { method: 'GET' });
             const data = await response.json();
 
             if (data.success) {
                 setInvite(false);
-                router.push(`/${roomID}`, { shallow: true } as any);
+                navigate(`/${roomID}`);
             } else {
                 toast.error('No room found');
                 if (isInputJoin) {
@@ -253,13 +252,13 @@ const JoinRoom = () => {
 };
 
 const ShareRoom = () => {
-    const roomID = useParams().roomID as string;
+    const { roomID } = useParams();
 
     const [hasCopied, setHasCopied] = useState<boolean>(false);
     const copyToClipboard = async () => {
         if (!hasCopied) {
             try {
-                await navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/${roomID}`);
+                await navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/${roomID}`);
                 setHasCopied(true);
                 toast.success("Copied");
             } catch (err) {
@@ -276,10 +275,10 @@ const ShareRoom = () => {
                         Share Invite
                     </p>
                     <div className='relative mx-auto w-[125px] h-[125px] md:w-[150px] md:h-[150px] flex items-center justify-center border-2'>
-                        <Image
+                        <img
                             width={150}
                             height={150}
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_FRONTEND_URL}/${roomID}`}
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${import.meta.env.VITE_FRONTEND_URL}/${roomID}`}
                             className='absolute z-[1] top-0 left-0 object-contain'
                             alt="Share QR"
                         />
@@ -298,7 +297,7 @@ const ShareRoom = () => {
                     </div>
                     <div className='w-full min-h-[42px] flex border border-gray-300 rounded-md pl-2 overflow-hidden'>
                         <div className='w-[90%] min-h-full text-ellipsis overflow-hidden border-r border-gray-300 py-2'>
-                            {`${process.env.NEXT_PUBLIC_FRONTEND_URL?.split(/https?:\/\//)[1]}/${roomID}`}
+                            {`${import.meta.env.VITE_FRONTEND_URL?.split(/https?:\/\//)[1]}/${roomID}`}
                         </div>
                         <button
                             title={`${hasCopied ? "Copied" : "Copy URL"}`}

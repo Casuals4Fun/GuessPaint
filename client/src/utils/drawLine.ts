@@ -9,7 +9,7 @@ export const drawLine = ({ prevPoint, currPoint, ctx, color, brushThickness }: D
     const lineWidth = brushThickness;
     const lineColor = color;
 
-    let startPoint = prevPoint ?? currPoint;
+    const startPoint = prevPoint ?? currPoint;
     ctx.beginPath();
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = lineColor;

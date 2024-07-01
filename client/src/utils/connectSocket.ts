@@ -4,7 +4,7 @@ let socketInstance: Socket | null = null;
 
 export const connectSocket = () => {
     if (!socketInstance) {
-        socketInstance = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
+        socketInstance = io(import.meta.env.VITE_BACKEND_URL!, {
             extraHeaders: {
                 "user-agent": "Mozilla"
             }

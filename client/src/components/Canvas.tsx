@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import useWindowSize from '@/utils/useWindowSize'
-import { useDraw } from '@/hooks/useDraw'
-import { useSidebarStore, useToolbarStore } from '@/store'
-import { drawLine } from '@/utils/drawLine'
-import { connectSocket } from '@/utils/connectSocket'
+import useWindowSize from '../utils/useWindowSize'
+import { useDraw } from '../hooks/useDraw'
+import { useSidebarStore, useToolbarStore } from '../store'
+import { drawLine } from '../utils/drawLine'
+import { connectSocket } from '../utils/connectSocket'
 import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import { DrawingSubject } from './Input'
 
 const Canvas: React.FC = () => {
-    const roomID = useParams().roomID as string;
+    const { roomID } = useParams();
 
     const { width, height } = useWindowSize();
     const { brushThickness, color } = useToolbarStore();
