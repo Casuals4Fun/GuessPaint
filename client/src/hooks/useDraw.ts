@@ -18,6 +18,8 @@ export const useDraw = (onDraw: ({ ctx, currPoint, prevPoint }: Draw) => void) =
     };
 
     useEffect(() => {
+        const canvas = canvasRef.current;
+
         const handleMove = (e: MouseEvent | TouchEvent) => {
             if (!mouseDown) return;
 
@@ -35,7 +37,7 @@ export const useDraw = (onDraw: ({ ctx, currPoint, prevPoint }: Draw) => void) =
 
             const currentPoint = computePointInCanvas(clientX, clientY);
 
-            const ctx = canvasRef.current?.getContext('2d');
+            const ctx = canvas?.getContext('2d');
             if (!ctx || !currentPoint) return;
 
             onDraw({ ctx, currPoint: currentPoint, prevPoint: prevPoint.current });
@@ -65,10 +67,9 @@ export const useDraw = (onDraw: ({ ctx, currPoint, prevPoint }: Draw) => void) =
         };
 
         const computePointInCanvas = (clientX: number, clientY: number) => {
-            const canvas = canvasRef.current;
-            if (!canvas) return null;
+            const rect = canvas?.getBoundingClientRect();
+            if (!rect || !canvas) return null;
 
-            const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
 
@@ -78,18 +79,18 @@ export const useDraw = (onDraw: ({ ctx, currPoint, prevPoint }: Draw) => void) =
             return { x, y };
         };
 
-        canvasRef.current?.addEventListener('mousemove', handleMove);
-        canvasRef.current?.addEventListener('touchmove', handleMove);
-        canvasRef.current?.addEventListener('mousedown', handleStart);
-        canvasRef.current?.addEventListener('touchstart', handleStart);
+        canvas?.addEventListener('mousemove', handleMove);
+        canvas?.addEventListener('touchmove', handleMove);
+        canvas?.addEventListener('mousedown', handleStart);
+        canvas?.addEventListener('touchstart', handleStart);
         window.addEventListener('mouseup', handleEnd);
         window.addEventListener('touchend', handleEnd);
 
         return () => {
-            canvasRef.current?.removeEventListener('mousemove', handleMove);
-            canvasRef.current?.removeEventListener('touchmove', handleMove);
-            canvasRef.current?.removeEventListener('mousedown', handleStart);
-            canvasRef.current?.removeEventListener('touchstart', handleStart);
+            canvas?.removeEventListener('mousemove', handleMove);
+            canvas?.removeEventListener('touchmove', handleMove);
+            canvas?.removeEventListener('mousedown', handleStart);
+            canvas?.removeEventListener('touchstart', handleStart);
             window.removeEventListener('mouseup', handleEnd);
             window.removeEventListener('touchend', handleEnd);
         }

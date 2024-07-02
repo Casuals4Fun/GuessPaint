@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import useWindowSize from '../utils/useWindowSize'
@@ -10,12 +10,12 @@ import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import { DrawingSubject } from './Input'
 
-const Canvas: React.FC = () => {
+const Canvas = () => {
     const { roomID } = useParams();
 
     const { width, height } = useWindowSize();
     const { brushThickness, color } = useToolbarStore();
-    const { players, setPlayers, addPlayer } = useSidebarStore();
+    const { assignedPlayerName, players, setPlayers, addPlayer } = useSidebarStore();
 
     const socketRef = useRef(connectSocket());
     const joinedRoomRef = useRef(false);
@@ -35,9 +35,7 @@ const Canvas: React.FC = () => {
         const ctx = canvasRef.current?.getContext('2d');
 
         if (!joinedRoomRef.current) {
-            // if (typeof window !== 'undefined') {
-            socket.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
-            // }
+            socket.emit('join-room', { roomID, playerName: assignedPlayerName.trim() });
             joinedRoomRef.current = true;
         }
 

@@ -46,7 +46,9 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
         }
     };
 
-    const handleSubmitGuess = () => {
+    const handleSubmitGuess = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        
         if (guess.join('').length < guessLength) return toast.warning('Guess the drawing subject');
         socketRef.current?.emit('guess-word', { playerName: assignedPlayerName, guess: guess.join('') });
         setGuess(Array(guessLength).fill(''));
@@ -187,8 +189,6 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // console.log({ isPrompted, assignedPlayerName });
-
     return (
         <div className={`absolute z-[0] ${width < 768 ? "h-[250px]" : `h-[${height - 54}px]`} md:right-0 md:top-[54px] bottom-0 md:max-w-[400px] lg:max-w-[450px] w-[100%] bg-gray-300 border-l border-gray-400 overflow-auto`}>
             <div className='sticky top-0 grid grid-cols-2 border-y border-gray-400'>
@@ -200,11 +200,11 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
 
             <div className='h-[calc(100%-46px)] overflow-hidden'>
                 <div className='h-full overflow-auto'>
-                    {tab === 0 ? (players.length === 0 ? <p className='m-2 my-5 md:m-5'>No players in the room</p> :
-                        players.length < 2 ? <p className='m-2 my-5 md:m-5'>Waiting for at least 2 players...</p> : (
+                    {tab === 0 ? (players.length === 0 ? <p className='p-2 py-5 md:p-5'>No players in the room</p> :
+                        players.length < 2 ? <p className='p-2 py-5 md:p-5'>Waiting for at least 2 players...</p> : (
                             <>
                                 {isGuessEntryEnabled ? (
-                                    <div className='m-2 my-5 md:m-5 w-full flex flex-col gap-2 justify-between'>
+                                    <form className='px-2 pt-5 md:px-5 w-full flex flex-col gap-2 justify-between' onSubmit={handleSubmitGuess}>
                                         <div className='w-full flex flex-wrap gap-2 items-center'>
                                             {guess.map((digit, index) => (
                                                 <input
@@ -218,14 +218,11 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
                                                 />
                                             ))}
                                         </div>
-                                        <button
-                                            onClick={handleSubmitGuess}
-                                            className="w-fit bg-black text-white py-2 px-4 rounded active:scale-90 duration-200"
-                                        >
+                                        <button className='w-fit bg-black text-white py-2 px-4 rounded active:scale-90 duration-200'>
                                             Submit Guess
                                         </button>
-                                    </div>
-                                ) : isPrompted !== assignedPlayerName && <p className='m-2 my-5 md:m-5'>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
+                                    </form>
+                                ) : isPrompted !== assignedPlayerName && <p className='px-2 pt-5 md:px-5'>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
                                 <Leaderboard socketRef={socketRef} leaderboard={leaderboard} setLeaderboard={setLeaderboard} votes={votes} />
                             </>
                         )

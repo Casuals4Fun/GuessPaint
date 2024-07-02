@@ -1,16 +1,11 @@
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-// import usePlayerName from '../hooks/usePlayerName'
 import { useInviteStore, useSidebarStore } from '../store'
 import { PlayerName } from '../components/Input'
 import Canvas from '../components/Canvas'
 import Invite from '../components/Invite'
 
 const Room = () => {
-    const roomID = useParams().roomID as string;
-
-    // const { playerName, savePlayerName, loading } = usePlayerName();
     const { roomType, setPreference, invite, setInvite } = useInviteStore();
     const { assignedPlayerName } = useSidebarStore();
 
@@ -28,13 +23,11 @@ const Room = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // if (loading) return null;
-    // return !playerName ? <PlayerName onSavePlayerName={savePlayerName} /> : (
-    return !assignedPlayerName ? <PlayerName /> : (
-        <div className='overflow-y-hidden relative w-screen flex flex-col items-center justify-between'>
-            {roomID && <Canvas />}
+    return !assignedPlayerName.split('#')[0].trim() ? <PlayerName /> : (
+        <>
+            <Canvas />
             {invite && <Invite />}
-        </div>
+        </>
     )
 };
 
