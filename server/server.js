@@ -79,17 +79,20 @@ io.on('connection', socket => {
         if (!roomPlayers[roomID].includes(uniquePlayerName)) {
             roomPlayers[roomID].push(uniquePlayerName);
         }
+        socket.emit('players-in-room', roomPlayers[roomID]);
+        socket.emit('assign-player-name', uniquePlayerName);
+        socket.broadcast.to(roomID).emit('new-player', uniquePlayerName);
 
         if (!leaderboards[roomID]) leaderboards[roomID] = {};
         if (!leaderboards[roomID][uniquePlayerName]) {
             leaderboards[roomID][uniquePlayerName] = 0;
         }
+        io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
 
         if (!currentPlayerIndex[roomID]) currentPlayerIndex[roomID] = 0;
-
-        socket.emit('assign-player-name', uniquePlayerName);
-        socket.broadcast.to(roomID).emit('new-player', playerName);
-        socket.emit('players-in-room', roomPlayers[roomID]);
+        if (roomPlayers[roomID].length >= 2) {
+            io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
+        }
 
         if (votes[roomID]) {
             for (const player in votes[roomID]) {
@@ -97,12 +100,6 @@ io.on('connection', socket => {
                 io.to(roomID).emit('vote-progress', { player, votes: votes[roomID][player].count });
             }
         }
-
-        if (roomPlayers[roomID].length >= 2) {
-            io.to(roomID).emit('prompt-word-entry', roomPlayers[roomID][currentPlayerIndex[roomID]]);
-        }
-
-        io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
     });
 
     socket.on('submit-word', ({ playerName, word }) => {
