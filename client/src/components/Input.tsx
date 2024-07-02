@@ -4,24 +4,24 @@ import { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 import { useSidebarStore } from '../store'
 
-interface PlayerNameProps {
-    onSavePlayerName: (name: string) => void;
-}
-
-const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
+const PlayerName = () => {
     const [name, setName] = useState('');
+    const { setAssignedPlayerName } = useSidebarStore();
 
-    const handlePlayerName = () => {
+    const handlePlayerName = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
         if (!name.trim()) return toast.warning("Enter your name to proceed");
         if (name.trim().length > 20) return toast.warning("Maximum 20 characters allowed");
-        onSavePlayerName(name.trim());
+        setAssignedPlayerName(name.trim());
+        localStorage.setItem('playerName', name.trim());
     };
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-black opacity-70 fixed inset-0 z-40"></div>
             <div className='bg-white w-[95%] md:w-[500px] mx-auto rounded-lg shadow-lg overflow-hidden z-50 relative'>
-                <div className="p-5 h-full flex flex-col justify-between gap-5">
+                <form className="p-5 h-full flex flex-col justify-between gap-5" onSubmit={handlePlayerName}>
                     <p className='text-[20px] text-center'>Guess Paint</p>
                     <div className='flex items-center justify-between'>
                         <p className='w-fit'>Your name</p>
@@ -33,14 +33,11 @@ const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
                         />
                     </div>
                     <div className='flex justify-end items-center'>
-                        <button
-                            className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'
-                            onClick={handlePlayerName}
-                        >
+                        <button className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'>
                             Proceed
                         </button>
                     </div>
-                </div>
+                </form>
                 <div className='w-full h-[1px] bg-gray-200' />
                 <p className='text-center text-sm p-3'>Made with ❤️ by <a href="https://github.com/Shubham-Lal" target="_blank" rel="noopener noreferrer" className='underline'>Shubham Lal</a></p>
             </div>
@@ -101,7 +98,9 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
     const { assignedPlayerName } = useSidebarStore();
     const [newName, setNewName] = useState(assignedPlayerName.split('#')[0] || '');
 
-    const handleSaveClick = () => {
+    const handleSaveClick = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
         if (newName.trim() !== '') {
             socketRef.current?.emit('change-name', { oldName: assignedPlayerName, newName }, (response: {
                 success: boolean;
@@ -121,10 +120,10 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center">
-            <div className="bg-black opacity-70 fixed inset-0"></div>
+        <div className='fixed inset-0 flex items-center justify-center'>
+            <div className='bg-black opacity-70 fixed inset-0'></div>
             <div className='bg-white w-[95%] md:w-[500px] mx-auto rounded-lg shadow-lg overflow-hidden relative'>
-                <div className="p-5 h-full flex flex-col justify-between gap-5">
+                <form className='p-5 h-full flex flex-col justify-between gap-5' onSubmit={handleSaveClick}>
                     <div className='flex items-center justify-between'>
                         <p className='w-fit'>Your name</p>
                         <input
@@ -136,19 +135,17 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
                     </div>
                     <div className='flex justify-between items-center'>
                         <button
+                            type='button'
                             className='py-2 rounded underline active:scale-90 duration-200'
                             onClick={() => setIsEditing(false)}
                         >
                             Close
                         </button>
-                        <button
-                            className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'
-                            onClick={handleSaveClick}
-                        >
+                        <button type='submit' className='bg-black text-white h-[40px] py-2 px-4 rounded active:scale-90 duration-200'>
                             Proceed
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     )

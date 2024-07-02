@@ -28,7 +28,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
     };
 
     return (
-        <div className='m-2 my-5 md:m-5'>
+        <div className='px-2 py-5 md:p-5'>
             {players.length > 0 && (
                 <Reorder.Group
                     as='div'
