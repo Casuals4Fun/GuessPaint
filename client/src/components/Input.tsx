@@ -5,16 +5,20 @@ import { toast } from 'sonner'
 import { useSidebarStore } from '../store'
 
 interface PlayerNameProps {
-    onSavePlayerName: (name: string) => void;
+    // onSavePlayerName: (name: string) => void;
 }
 
-const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
+// const PlayerName: React.FC<PlayerNameProps> = ({ onSavePlayerName }) => {
+const PlayerName: React.FC<PlayerNameProps> = () => {
     const [name, setName] = useState('');
+    const { setAssignedPlayerName } = useSidebarStore();
 
     const handlePlayerName = () => {
         if (!name.trim()) return toast.warning("Enter your name to proceed");
         if (name.trim().length > 20) return toast.warning("Maximum 20 characters allowed");
-        onSavePlayerName(name.trim());
+        // onSavePlayerName(name.trim());
+        setAssignedPlayerName(name.trim());
+        localStorage.setItem('playerName', name.trim());
     };
 
     return (

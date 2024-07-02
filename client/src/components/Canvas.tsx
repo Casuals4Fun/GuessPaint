@@ -35,9 +35,9 @@ const Canvas: React.FC = () => {
         const ctx = canvasRef.current?.getContext('2d');
 
         if (!joinedRoomRef.current) {
-            if (typeof window !== 'undefined') {
-                socket.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
-            }
+            // if (typeof window !== 'undefined') {
+            socket.emit('join-room', { roomID, playerName: localStorage.getItem('playerName') });
+            // }
             joinedRoomRef.current = true;
         }
 
