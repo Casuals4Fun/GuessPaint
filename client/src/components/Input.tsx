@@ -21,11 +21,12 @@ const PlayerName = () => {
         <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-black opacity-70 fixed inset-0 z-40"></div>
             <div className='bg-white w-[95%] md:w-[500px] mx-auto rounded-lg shadow-lg overflow-hidden z-50 relative'>
-                <form className="p-5 h-full flex flex-col justify-between gap-5" onSubmit={handlePlayerName}>
+                <form id='player-name' className="p-5 h-full flex flex-col justify-between gap-5" onSubmit={handlePlayerName}>
                     <p className='text-[20px] text-center'>Guess Paint</p>
                     <div className='flex items-center justify-between'>
                         <p className='w-fit'>Your name</p>
                         <input
+                            name='name-input'
                             className='w-[60%] outline-none border rounded-md py-2 px-1 md:px-4 text-center'
                             value={name}
                             onChange={e => setName(e.target.value)}
@@ -66,9 +67,10 @@ const DrawingSubject: React.FC<SubjectProps> = ({ socketRef }) => {
         <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-black opacity-70 fixed inset-0 z-40"></div>
             <div className='bg-white w-[95%] md:w-[500px] mx-auto rounded-lg shadow-lg overflow-hidden z-50 relative'>
-                <form className="p-5 h-full flex flex-col justify-between gap-5" onSubmit={handleSubmitWord}>
+                <form id='drawing-subject' className="p-5 h-full flex flex-col justify-between gap-5" onSubmit={handleSubmitWord}>
                     <p className='text-[20px] text-center'>What are you drawing</p>
                     <input
+                        name='subject-input'
                         type="text"
                         className='w-full outline-none border rounded-md py-2 px-1 md:px-4 text-center'
                         placeholder='Enter your drawing'
@@ -123,10 +125,11 @@ const ChangeName: React.FC<NameProps> = ({ socketRef, setIsEditing }) => {
         <div className='fixed inset-0 flex items-center justify-center'>
             <div className='bg-black opacity-70 fixed inset-0'></div>
             <div className='bg-white w-[95%] md:w-[500px] mx-auto rounded-lg shadow-lg overflow-hidden relative'>
-                <form className='p-5 h-full flex flex-col justify-between gap-5' onSubmit={handleSaveClick}>
+                <form id='change-name' className='p-5 h-full flex flex-col justify-between gap-5' onSubmit={handleSaveClick}>
                     <div className='flex items-center justify-between'>
                         <p className='w-fit'>Your name</p>
                         <input
+                            name='new-name-input'
                             className='w-[60%] outline-none border rounded-md py-2 px-1 md:px-4 text-center'
                             value={newName}
                             onChange={e => setNewName(e.target.value)}

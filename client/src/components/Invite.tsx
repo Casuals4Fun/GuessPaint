@@ -205,6 +205,7 @@ const JoinRoom = () => {
                     {roomID.map((digit, index) => (
                         <input
                             key={index}
+                            name={`roomid-input-${index}`}
                             ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
                             className='w-10 h-10 border border-gray-300 rounded text-center outline-none'
                             value={digit}

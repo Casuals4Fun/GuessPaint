@@ -41,8 +41,9 @@ const Chat: React.FC<ChatProps> = ({ socketRef, messages }) => {
                 ))}
                 <div ref={messagesEndRef} />
             </div>
-            <form className='absolute left-0 bottom-0 p-2 md:p-5 w-full flex items-center gap-2 border-t border-gray-400' onSubmit={handleSendMessage}>
+            <form id='chat' className='absolute left-0 bottom-0 p-2 md:p-5 w-full flex items-center gap-2 border-t border-gray-400' onSubmit={handleSendMessage}>
                 <input
+                    name='chat-input'
                     type='text'
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}

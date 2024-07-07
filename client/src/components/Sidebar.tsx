@@ -204,11 +204,12 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
                         players.length < 2 ? <p className='p-2 py-5 md:p-5'>Waiting for at least 2 players...</p> : (
                             <>
                                 {isGuessEntryEnabled ? (
-                                    <form className='px-2 pt-5 md:px-5 w-full flex flex-col gap-2 justify-between' onSubmit={handleSubmitGuess}>
+                                    <form id='guess-drawing' className='px-2 pt-5 md:px-5 w-full flex flex-col gap-2 justify-between' onSubmit={handleSubmitGuess}>
                                         <div className='w-full flex flex-wrap gap-2 items-center'>
                                             {guess.map((digit, index) => (
                                                 <input
                                                     key={index}
+                                                    name={`guess-input-${index}`}
                                                     ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
                                                     className='w-10 h-10 border border-gray-400 rounded text-center outline-none'
                                                     value={digit}
