@@ -152,6 +152,7 @@ io.on('connection', socket => {
         leaderboards[roomID][newNameWithID] = score;
 
         io.to(roomID).emit('player-name-changed', { oldName, newName: newNameWithID, promptedPlayer: roomPlayers[roomID][currentPlayerIndex[roomID]] });
+        io.to(roomID).emit('update-leaderboard', leaderboards[roomID]);
 
         rooms[socket.id] = roomID;
 
