@@ -9,22 +9,16 @@ import { ChangeName } from './Input'
 interface LeaderboardProps {
     socketRef: React.MutableRefObject<Socket | null>;
     leaderboard: { [key: string]: number };
-    setLeaderboard: React.Dispatch<React.SetStateAction<{ [key: string]: number }>>;
     votes: { [key: string]: number };
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLeaderboard, votes }) => {
+const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, votes }) => {
     const { players, assignedPlayerName } = useSidebarStore();
     const [isEditing, setIsEditing] = useState(false);
 
     const handleKickVote = (player: string) => {
         const socket = socketRef.current;
         socket?.emit('initiate-vote-kick', { player, voter: assignedPlayerName });
-    };
-
-    const handleReorder = (newOrder: [string, number][]) => {
-        const reorderedLeaderboard = Object.fromEntries(newOrder);
-        setLeaderboard(reorderedLeaderboard);
     };
 
     return (
@@ -34,7 +28,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ socketRef, leaderboard, setLe
                     as='div'
                     axis='y'
                     values={Object.entries(leaderboard)}
-                    onReorder={handleReorder}
+                    onReorder={() => {}}
                     className='flex flex-col gap-5'
                 >
                     {Object.entries(leaderboard).map(([player, points], index) => (

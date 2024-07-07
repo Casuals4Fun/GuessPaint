@@ -19,13 +19,14 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
 
     const [tab, setTab] = useState(0);
     const [leaderboard, setLeaderboard] = useState<{ [key: string]: number }>({});
+    const [votes, setVotes] = useState<{ [key: string]: number }>({});
     const [messages, setMessages] = useState<{ playerName: string, message: string }[]>([]);
+
     const [isPrompted, setIsPrompted] = useState('');
     const [isGuessEntryEnabled, setIsGuessEntryEnabled] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [guessLength, setGuessLength] = useState<number>(0);
     const [guess, setGuess] = useState<string[]>(Array(guessLength).fill(''));
-    const [votes, setVotes] = useState<{ [key: string]: number }>({});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const value = e.target.value.toUpperCase();
@@ -125,11 +126,6 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
         socket?.on('player-name-changed', ({ oldName, newName, promptedPlayer }: { oldName: string, newName: string, promptedPlayer: string }) => {
             setPlayers((prevPlayers: string[]) => prevPlayers.map((player: string) => (player === oldName ? newName : player)));
 
-            setLeaderboard(prevLeaderboard => {
-                const { [oldName]: score, ...rest } = prevLeaderboard;
-                return { ...rest, [newName]: score };
-            });
-
             setMessages((prevMessages) => prevMessages.map((msg) => msg.playerName === oldName ? { ...msg, playerName: newName } : msg));
 
             if (useSidebarStore.getState().assignedPlayerName === oldName) {
@@ -224,7 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
                                         </button>
                                     </form>
                                 ) : isPrompted !== assignedPlayerName && <p className='px-2 pt-5 md:px-5'>Waiting for <span className='font-semibold'>{isPrompted.split('#')[0]}</span> to submit the word...</p>}
-                                <Leaderboard socketRef={socketRef} leaderboard={leaderboard} setLeaderboard={setLeaderboard} votes={votes} />
+                                <Leaderboard socketRef={socketRef} leaderboard={leaderboard} votes={votes} />
                             </>
                         )
                     ) : tab === 1 && <Chat socketRef={socketRef} messages={messages} />}
