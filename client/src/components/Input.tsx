@@ -64,8 +64,10 @@ const DrawingSubject: React.FC<SubjectProps> = ({ socketRef }) => {
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="bg-black opacity-70 fixed inset-0 z-40"></div>
+        // <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed top-0 left-0 right-0 md:right-[400px] lg:right-[450px] h-[calc(100dvh-250px)] md:h-[100dvh] flex items-center justify-center z-50">
+            {/* <div className="bg-black opacity-70 fixed inset-0 z-40"></div> */}
+            <div className="bg-black opacity-70 fixed top-0 left-0 right-0 md:right-[400px] lg:right-[450px] h-[calc(100dvh-250px)] md:h-[100dvh] z-40"></div>
             <div className='bg-white w-[95%] md:w-[500px] mx-auto rounded-lg shadow-lg overflow-hidden z-50 relative'>
                 <form id='drawing-subject' className="p-5 h-full flex flex-col justify-between gap-5" onSubmit={handleSubmitWord}>
                     <p className='text-[20px] text-center'>What are you drawing</p>
