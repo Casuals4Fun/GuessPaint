@@ -73,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ socketRef }) => {
             setGuessLength(wordLength);
             setGuess(Array(wordLength).fill(''));
             if (playerName === useSidebarStore.getState().assignedPlayerName) {
-                toast.success('You have submitted the word');
+                toast.success('You can draw now');
             }
             else {
                 setIsGuessEntryEnabled(true);
